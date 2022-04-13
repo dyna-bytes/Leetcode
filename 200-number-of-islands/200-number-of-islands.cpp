@@ -4,13 +4,17 @@ public:
     vector<vector<bool>> visited;
     int dy[4] = {-1, 1, 0, 0}, dx[4] = {0, 0, -1, 1};
     
+    bool inRange(int y, int x){
+        return (y >= 0 && y < Y && x >= 0 && x < X);
+    }
+    
     void dfs(int y, int x, vector<vector<char>>& grid){
         visited[y][x] = true;
         
         for(int dir = 0; dir < 4; dir++){
             int ny = y + dy[dir], nx = x + dx[dir];
             
-            if(!(ny >= 0 && ny < Y && nx >= 0 && nx < X)) continue;
+            if(!inRange(ny, nx)) continue;
             if(visited[ny][nx]) continue;
             if(grid[ny][nx] == '1') dfs(ny, nx, grid);            
         }
