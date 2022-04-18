@@ -13,11 +13,22 @@ public:
                 dp.push_back(nums[i]);
                 ret++;
             }else{
-                auto pos = lower_bound(dp.begin(), dp.end(), nums[i]);
-                *pos = nums[i];
+                int pos = mylower_bound(dp, nums[i]);
+                dp[pos] = nums[i];
             }
         }
         return ret;
+    }
+    
+    // 구간[lo, hi)에서 target보다 같거나 큰 최소의 값을 찾음
+    int mylower_bound(vector<int>& A, int target){
+        int lo = 0, hi = A.size();
+        while(lo + 1 < hi){
+            int mid = (lo + hi)/2;
+            if(A[mid] < target) lo = mid;
+            else hi = mid;
+        }
+        return hi;
     }
     
 };
