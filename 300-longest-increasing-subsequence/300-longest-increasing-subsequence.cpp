@@ -5,19 +5,17 @@ public:
         int n = nums.size();
         if(n == 0) return 0;
         
-        vector<int> dp(n, 0);
+        vector<int> dp(1, INT_MIN);
         int ret = 0;
         
-        // dp[x] : nums[x]로 시작하는 LIS의 길이
-        for(int i = n-1; i >= 0; i--){
-            int max_dp = 0;
-            for(int j = i + 1; j < n; j++){
-                if(nums[i] < nums[j]){
-                    max_dp = max(max_dp, dp[j]);
-                }
+        for(int i = 0; i < n; i++){
+            if(dp.back() < nums[i]){
+                dp.push_back(nums[i]);
+                ret++;
+            }else{
+                auto pos = lower_bound(dp.begin(), dp.end(), nums[i]);
+                *pos = nums[i];
             }
-            dp[i] = 1 + max_dp;
-            ret = max(ret, dp[i]);
         }
         return ret;
     }
