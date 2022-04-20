@@ -1,10 +1,9 @@
 class Solution {
 public:
     vector<int> dp;
-    int N;
     
     int minDominoRotations(vector<int>& tops, vector<int>& bottoms) {
-        N = tops.size();
+        int N = tops.size();
         
         dp.resize(N+1, -1);        
         vector<int> t = tops, b = bottoms;
@@ -31,7 +30,7 @@ public:
     int flip(int n, int target, vector<int>& t, vector<int>& b){
         int& ret = dp[n];
         if(ret != -1) return ret;
-        if(n == N) return ret = 0;
+        if(n == t.size()) return ret = 0;
      
         if(t[n] == target) {
             return ret = flip(n+1, target, t, b);
