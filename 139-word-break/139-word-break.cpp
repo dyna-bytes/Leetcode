@@ -8,9 +8,10 @@ public:
             string curr_s = s.substr(i); // [i, end)까지의 문자열
             
             for(string word: wordDict){
-                if(isMatch(curr_s, word)){
-                    int len = word.size();
-                    
+                int len = word.size();
+                if(curr_s.size() < len) continue;
+                
+                if(curr_s.substr(0, len) == word){
                     if(i == 0) dp[i] = true;
                     if(dp[i+len] == false && dp[i] == true) dp[i+len] = true;
                 }
@@ -19,9 +20,5 @@ public:
         
         return dp[n];
     }
-    
-    bool isMatch(string s, string word){
-        if(s.size() < word.size()) return false;
-        return s.substr(0, word.size()) == word;
-    }
+    \
 };
