@@ -13,7 +13,7 @@ public:
                 
                 if(curr_s.substr(0, len) == word){
                     if(i == 0) dp[i] = true;
-                    if(dp[i+len] == false && dp[i] == true) dp[i+len] = true;
+                    if(dp[i] == true) dp[i+len] = true;
                 }
             }
         }
