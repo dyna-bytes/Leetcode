@@ -22,7 +22,8 @@ public:
         t = tops, b = bottoms;
         int retTT = flip(0, t[0], b, t); // target at T[0], flip if target == T[i]
         
-        int ret = min(min(retTB, retBB), min(retBT, retTT));
+        int ret = min(retTB, retBB);
+        ret = min(ret, min(retBT, retTT));
         if(ret == INT_MAX) ret = -1;
         return ret;
     }
