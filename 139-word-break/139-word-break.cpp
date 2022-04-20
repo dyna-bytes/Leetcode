@@ -1,33 +1,27 @@
 class Solution {
-public:
-    vector<int> dp;
-    
+public:    
     bool wordBreak(string s, vector<string>& wordDict) {
-        dp.resize(s.size() + 1, -1);
-        return wrdbrk(s, wordDict);
+        int n = s.size();
+        vector<bool> dp(n+1); // dp[n] : n번째 char까지 wordBreak를 만족하는가
+        
+        for(int i = 0; i < n; i++){
+            string curr_s = s.substr(i); // [i, end)까지의 문자열
+            
+            for(string word: wordDict){
+                if(isMatch(curr_s, word)){
+                    int len = word.size();
+                    
+                    if(i == 0) dp[i] = true;
+                    if(dp[i+len] == false && dp[i] == true) dp[i+len] = true;
+                }
+            }
+        }
+        
+        return dp[n];
     }
     
     bool isMatch(string s, string word){
         if(s.size() < word.size()) return false;
         return s.substr(0, word.size()) == word;
-    }
-    
-    bool wrdbrk(string s, vector<string>& wordDict){
-        // we have 2 choices
-        // if word in wordDict matches the string S,
-        //      extract the word from the string S 
-        //      or don't extract the word and try to find another word that matches with S
-        int& ret = dp[s.size()];
-        if(ret != -1) return ret;
-        if(s.size() == 0) return ret = true;
-        
-        ret = false;
-        for(string word : wordDict){
-            if(isMatch(s, word)){
-                string next_s = s.substr(word.size());
-                ret |= wrdbrk(next_s, wordDict);
-            }   
-        }
-        return ret;   
     }
 };
