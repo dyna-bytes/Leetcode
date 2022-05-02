@@ -15,7 +15,7 @@ public:
                 start++;
             }
             
-            ret = max(ret, end - start + 1);
+            ret = end - start + 1;
         }
         
         return ret;
