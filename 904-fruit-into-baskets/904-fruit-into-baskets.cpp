@@ -15,7 +15,8 @@ public:
                 start++;
             }
             
-            ret = end - start + 1;
+            ret = end - start + 1; // 얘 자체가 max갱신을 포함하고 있음
+            // 값이 커졌으면 커졌지 작아지진 않음
         }
         
         return ret;
