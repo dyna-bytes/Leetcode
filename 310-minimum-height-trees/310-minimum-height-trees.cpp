@@ -2,46 +2,40 @@ class Solution {
     
 public:
     vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {
-        if(n < 2){
-            vector<int> centroids(n);
-            for(int i = 0; i < n; i++)
-                centroids[i] = i;
-            return centroids;
-        }
+        if(n == 0) return {};
+        if(n == 1) return {0};
         
+        vector<int> res;
+        vector<int> degrees(n);
         vector<vector<int>> adj(n);
         for(vector<int> edge : edges){
             int from = edge[0], to = edge[1];
             adj[from].push_back(to);
             adj[to].push_back(from);
+            degrees[from]++;
+            degrees[to]++;
         }
         
-        vector<int> leaves;
-        for(int i = 0; i < n; i++)
-            if(adj[i].size() == 1) // 인접리스트에서 말단 노드를 찾음
-                leaves.push_back(i);
+        queue<int> q;
+        for(int i = 0; i < n; i++) // 말단 노드를 찾는다.
+            if(degrees[i] == 1) q.push(i);
         
-        int remaining = n;
-        while(remaining > 2){
-            remaining -= leaves.size();
-            vector<int> newLeaves;
-            
-            for(int leaf : leaves){
-                int next = adj[leaf][0];
-                // delete edge from next to leaf
-                for(int i = 0; i < adj[next].size(); i++)
-                    if(adj[next][i] == leaf) {
-                        adj[next].erase(adj[next].begin() + i);
-                        break;
-                    }
+        // level-order bfs
+        while(!q.empty()){
+            res.clear();
+            int qsize = q.size();
+            for(int i = 0; i < qsize; i++){
+                int curr = q.front();
+                q.pop();
+                res.push_back(curr);
                 
-                // find new leaves
-                if(adj[next].size() == 1)
-                    newLeaves.push_back(next);
+                for(int next: adj[curr]){
+                    degrees[next]--;
+                    if(degrees[next] == 1) q.push(next);
+                }
             }
-            leaves = newLeaves;
         }
         
-        return leaves;
+        return res;
     }
 };
