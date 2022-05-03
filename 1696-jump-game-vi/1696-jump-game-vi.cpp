@@ -6,17 +6,19 @@ public:
         dp.resize(n + 1, 0);
         dp[n-1] = nums[n-1];
         
-        priority_queue<pair<int, int>> pq;
-        pq.push({dp[n-1], n-1});
+        deque<int> q; // 인덱스: 단조 감소, 배열값: 단조 감소
+        q.push_back(n-1);
         
         for(int here = n-2; here >= 0; here--){
-            while(!pq.empty() && pq.top().second > min(n-1, here + k))
-                pq.pop(); // pq의 최댓값 중 점프할 수 없는 위치의 값들은 제거
+            while(!q.empty() && q.front() > min(n-1, here+k))
+                q.pop_front();
             
-            dp[here] = pq.top().first + nums[here]; // max(dp[here+1 ~ n-1]) + nums[here]
-            pq.push({dp[here], here});
+            dp[here] = dp[q.front()] + nums[here];
+            
+            while(!q.empty() && dp[q.back()] <= dp[here])
+                q.pop_back();
+            q.push_back(here);
         }
-        
         
         return dp[0];
     }
