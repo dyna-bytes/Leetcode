@@ -11,7 +11,7 @@ public:
         
         for(int here = n-2; here >= 0; here--){
             while(!q.empty() && q.front() > min(n-1, here+k))
-                q.pop_front();
+                q.pop_front(); // 점프할 수 없는 위치의 dp배열 인덱스
             
             dp[here] = dp[q.front()] + nums[here];
             
