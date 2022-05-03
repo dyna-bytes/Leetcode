@@ -3,45 +3,68 @@ public:
     int rob(vector<int>& nums) {
         int n = nums.size();
         if(n == 1) return nums[0];
-        const int IMPOSSIBLE = -1;
-        int ret;
         
         vector<vector<int>> dp;
         dp.resize(n+2, vector<int>(2, 0));
         
-        // 0번 집을 털고, n-1번 집을 털지 않음
-        dp[0][true] = nums[0], dp[0][false] = IMPOSSIBLE;
-        for(int here = 1; here < n; here++){
-            int prev = here - 1;
-            dp[here][true] = dp[prev][false] + nums[here];
-            dp[here][false] = max(dp[prev][false], dp[prev][true]);
-        }
-        ret = dp[n-1][false];
         
+        // 첫번째 집 털고, 마지막 집 안 텀
+        for(int i = n-1; i >= 0; i--){
+            for(int j = 0; j < 2; j++){
+                if(i == n-1){ // 마지막 집 안 텀
+                    dp[i][0] = 0; dp[i][1] = 0;
+                    continue;
+                }
+                
+                if(j == 0){ // 현재 집을 안 텀
+                    dp[i][0] = max( dp[i+1][0], dp[i+1][1] ); // 이전 집을 안털거나, 털거나
+                } else {  // 현재 집을 텀
+                    dp[i][1] = nums[i] + dp[i+1][0]; // 이전 집을 안 털고 + 현재 집 돈
+                }
+            }
+        }
+        
+        int ret = dp[0][1]; // 첫 번째 집 텀
         dp.clear();
         dp.resize(n+2, vector<int>(2, 0));
         
-        // 0번 집 털지 않고, n-1번 집 털음
-        dp[0][true] = IMPOSSIBLE, dp[0][false] = 0;
-        for(int here = 1; here < n; here++){
-            int prev = here - 1;
-            dp[here][true] = dp[prev][false] + nums[here];
-            dp[here][false] = max(dp[prev][false], dp[prev][true]);
+        // 첫번째 집 안 털고, 마지막 집 텀
+        for(int i = n-1; i >= 0; i--){
+            for(int j = 0; j < 2; j++){
+                if(i == n-1){ // 마지막 집 텀
+                    dp[i][0] = 0; dp[i][1] = nums[i];
+                    continue;
+                }
+                
+                if(j == 0){ // 현재 집을 안 텀
+                    dp[i][0] = max( dp[i+1][0], dp[i+1][1] ); // 이전 집을 안털거나, 털거나
+                } else if (i != n-2) {  // 현재 집을 텀
+                    dp[i][1] = nums[i] + dp[i+1][0]; // 이전 집을 안 털고 + 현재 집 돈
+                }
+            }
         }
-        ret = max(ret, dp[n-1][true]);
         
+        ret = max(ret, dp[0][0]); // 첫 번째 집 안 텀
         dp.clear();
         dp.resize(n+2, vector<int>(2, 0));
         
-        // 0번 집, n-1번 집 둘 다 털지 않음
-        dp[0][true] = IMPOSSIBLE, dp[0][false] = 0;
-        for(int here = 1; here < n; here++){
-            int prev = here - 1;
-            dp[here][true] = dp[prev][false] + nums[here];
-            dp[here][false] = max(dp[prev][false], dp[prev][true]);
+        // 첫번째 집 안 털고, 마지막 집 안 텀
+        for(int i = n-1; i >= 0; i--){
+            for(int j = 0; j < 2; j++){
+                if(i == n-1){ // 마지막 집 안 텀
+                    dp[i][0] = 0; dp[i][1] = 0;
+                    continue;
+                }
+                
+                if(j == 0){ // 현재 집을 안 텀
+                    dp[i][0] = max( dp[i+1][0], dp[i+1][1] ); // 이전 집을 안털거나, 털거나
+                } else {  // 현재 집을 텀
+                    dp[i][1] = nums[i] + dp[i+1][0]; // 이전 집을 안 털고 + 현재 집 돈
+                }
+            }
         }
-        ret = max(ret, dp[n-1][false]);
         
+        ret = max(ret, dp[0][0]);
         return ret;
     }
 };
