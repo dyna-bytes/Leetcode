@@ -4,30 +4,41 @@ public:
         int n = intervals.size();
         if(n == 0) return {newInterval};
         
-        int sn = newInterval[0], se = newInterval[1];
+        int ns = newInterval[0], ne = newInterval[1];
         
-        int vecIdxS = 0, vecIdxE = 0;
-        bool catchedS = false, catchedE = false;
+        bool catched_ns = false;
+        bool catched_ne = false;
+        int ns_idx = 0; // ns 삽입 인덱스
+        int ne_idx = 0; // ne 삽입 인덱스
+        
         for(int i = 0; i < n; i++){
-            int S = intervals[i][0], E = intervals[i][1];
+            int s = intervals[i][0], e = intervals[i][1];
+            if(s <= ns && ns <= e){
+                catched_ns = true;
+                ns_idx = i;
+            }
+            else if(!catched_ns && ns > e){ // 놓치고 현재 범위보다 뒤에 ns가 있다면
+                ns_idx = i + 1; // 뒤의 위치를 삽입 인덱스로 지정
+            }
             
-            if(S <= sn && sn <= E){ catchedS = true; vecIdxS = i; }
-            else if(!catchedS && E <= sn){ vecIdxS = i + 1; }
-            
-            if(S <= se && se <= E){ catchedE = true; vecIdxE = i + 1; }
-            else if(!catchedE && E <= se){ vecIdxE = i + 1; }
+            if(s <= ne && ne <= e){ 
+                catched_ne = true;
+                ne_idx = i + 1;
+            }
+            else if(!catched_ne && ne > e){
+                ne_idx = i + 1;
+            }
         }
         
-        if(catchedS){
-            newInterval[0] = intervals[vecIdxS][0];
-        }
-        if(catchedE){
-            newInterval[1] = intervals[vecIdxE - 1][1];
-        }
-        
-        // 구간[s, e)
-        intervals.erase(intervals.begin() + vecIdxS, intervals.begin() + vecIdxE);
-        intervals.insert(intervals.begin() + vecIdxS, newInterval);
+        if(catched_ns)
+            newInterval[0] = intervals[ns_idx][0];
+        if(catched_ne)
+            newInterval[1] = intervals[ne_idx - 1][1];
+            
+        // 구간 [s, e)
+        auto begin = intervals.begin();
+        intervals.erase(begin + ns_idx, begin + ne_idx);
+        intervals.insert(begin + ns_idx, newInterval);
         return intervals;
     }
 };
