@@ -10,9 +10,17 @@ public:
     int eraseOverlapIntervals(vector<vector<int>>& intervals) {
         sort(intervals.begin(), intervals.end(), cmp);
         
-        return intervals.size() - greedy(intervals);
+        int count = 0;
+        int prev = INT_MIN;
+        for(vector<int> inter: intervals){
+            int start = inter[0], end = inter[1];
+            if(start < prev) count++;
+            else prev = end;
+        }
+        return count;
     }
     
+    /*
     int greedy(vector<vector<int>>& intervals){
         int count = 0;
         int line = INT_MIN;
@@ -25,5 +33,5 @@ public:
         }
         return count;
     }
-    
+    */
 };
