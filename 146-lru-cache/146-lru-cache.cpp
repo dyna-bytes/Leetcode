@@ -26,13 +26,11 @@ public:
     
     void put(int key, int value) {
         if(get(key) != -1){
-            Node* node = map.find(key)->second;
-            node->first = value;
+            map[key]->first = value;
             return;
         }
         
-        Node* node = new Node();
-        node->first = value;
+        Node* node = new Node(value, nullptr);
         insertBack(key, node);
         map.insert({key, node});
 
@@ -53,7 +51,6 @@ private:
         used.erase(node_it);
     }
 };
-
 
 /**
  * Your LRUCache object will be instantiated and called as such:
