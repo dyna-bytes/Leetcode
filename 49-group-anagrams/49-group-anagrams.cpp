@@ -4,7 +4,7 @@ public:
         vector<vector<string>> ret;
         unordered_map<string, vector<string>> map;
 
-        for(const string s: strs){
+        for(const auto& s: strs){
             string t = s;
             sort(t.begin(), t.end());
             map[t].push_back(s);
@@ -12,7 +12,7 @@ public:
 
         ret.reserve(map.size());
         for(auto& pair: map){
-            ret.push_back(pair.second);
+            ret.push_back(std::move(pair.second));
         }
         return ret;
     }
