@@ -1,27 +1,19 @@
 class Solution {
 public:
     vector<vector<string>> groupAnagrams(vector<string>& strs) {
-        vector<string> copy = strs;
-        for(string& str: copy){
-            sort(str.begin(), str.end());
+        vector<vector<string>> ret;
+        unordered_map<string, vector<string>> map;
+
+        for(const string s: strs){
+            string t = s;
+            sort(t.begin(), t.end());
+            map[t].push_back(s);
         }
 
-        vector<vector<string>> ans;
-        unordered_map<string, int> hashmap;
-        
-        for(int index = 0; string sorted: copy){
-            // debug(sorted);
-            if(hashmap.find(sorted) != hashmap.end()){
-                int push_to = hashmap[sorted];
-                ans[push_to].push_back(strs[index]);
-                // debug(push_to);
-            }else{
-                ans.push_back({strs[index]});
-                hashmap.insert({sorted, ans.size() - 1});
-                // debug(hashmap.count(sorted));
-            }
-            index++;
+        ret.reserve(map.size());
+        for(auto& pair: map){
+            ret.push_back(pair.second);
         }
-        return ans;
+        return ret;
     }
 };
