@@ -35,7 +35,7 @@ public:
         return node->value;
     }
 
-    void put(int key, int value){auto ret = map.find(key);
+    void put(int key, int value){
         if(get(key) != -1){
             map.find(key)->second->value = value;
             return;
