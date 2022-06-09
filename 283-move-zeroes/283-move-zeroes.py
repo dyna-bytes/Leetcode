@@ -4,15 +4,9 @@ class Solution:
         Do not return anything, modify nums in-place instead.
         """
         n = len(nums)
-        cnt = 0
-        i = 0
-        while i < len(nums):
-            if nums[i] == 0:
-                nums.remove(0)
-                cnt += 1
-            else :
-                i += 1 
         
-        
-        zeros: List[int] = [0 for z in range(cnt)]
-        nums += zeros
+        zero = 0
+        for nonzero in range(n):
+            if nums[nonzero] != 0:
+                nums[zero], nums[nonzero] = nums[nonzero], nums[zero]
+                zero += 1
