@@ -6,14 +6,11 @@ public:
         int k = 0;
         
         int p = 0;
-        for (int i = 0; i < N; i++) {
-            if (nums[i] != val) {
-                swap(nums[p], nums[i]);
-                p++;
-            }
-        }
-
-        nums.erase(nums.begin() + p, nums.end());
-        return nums.size();
+        for (int i = 0; i < N; i++) 
+            if (nums[i] != val) 
+                nums[p++] = nums[i];
+        
+        // debugVec(nums);
+        return p;
     }
 };
