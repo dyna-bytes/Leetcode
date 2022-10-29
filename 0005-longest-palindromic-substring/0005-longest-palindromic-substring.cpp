@@ -5,8 +5,8 @@ public:
     bool isPalindrome(int S, int E, string& str) {
         int& ret = dp[S][E];
         if (ret != -1) return ret;
-        if (S == E) return true;
-        if (S + 1 == E) return (str[S] == str[E]);
+        if (S == E) return ret = true;
+        if (S + 1 == E) return ret = (str[S] == str[E]);
 
         return ret = (str[S] == str[E]) && isPalindrome(S+1, E-1, str);
     }
