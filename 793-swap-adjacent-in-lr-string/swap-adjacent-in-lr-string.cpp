@@ -7,12 +7,12 @@ public:
             char s_char = start[s];
             char r_char = result[r];
             if (s_char == 'X') {
-                s++;
+                while (start[s] == 'X') s++;
                 continue;
             }
 
             if (r_char == 'X') {
-                r++;
+                while (result[r] == 'X') r++;
                 continue;
             }
 
