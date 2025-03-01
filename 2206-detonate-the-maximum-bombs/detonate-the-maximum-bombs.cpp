@@ -23,8 +23,6 @@ public:
     }
 
     void try_merge(int a, int b, vector<vector<int>>& bombs) {
-        if (a < 0) return;
-
         auto prev = bombs[a];
         auto curr = bombs[b];
 
@@ -34,8 +32,6 @@ public:
             adj[a].push_back(b);
         if (dist <= (ll)curr[2]*curr[2])
             adj[b].push_back(a);
-        
-        try_merge(a-1, b, bombs);
     };
 
     int maximumDetonation(vector<vector<int>>& bombs) {
@@ -43,8 +39,9 @@ public:
         adj.resize(bombs.size());
         visited.resize(bombs.size(), false);
 
-        for (int i = 1; i < bombs.size(); i++)
-            try_merge(i-1, i, bombs);
+        for (int i = 0; i < bombs.size(); i++)
+            for (int j = 0; j < bombs.size(); j++)
+                if (i != j) try_merge(i, j, bombs);
         
         int max_detonation = 0;
         for (int i = 0; i < bombs.size(); i++) { 
