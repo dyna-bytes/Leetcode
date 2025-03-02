@@ -1,30 +1,26 @@
 class Solution {
 public:
-    int numMatchingSubseq(string s, vector<string>& words) {
-        // Preprocess s: for each letter, store its indices in s.
-        vector<vector<int>> char_indices(26);
-        for (int i = 0; i < s.size(); i++) {
-            char_indices[s[i] - 'a'].push_back(i);
-        }
-
-        int count = 0;
-        for (const string &word : words) {
-            int prev_index = -1;
-            bool is_subseq = true;
-            for (char c : word) {
-                const auto &indices = char_indices[c - 'a'];
-                // Use binary search to find the index greater than prev_index.
-                auto it = upper_bound(indices.begin(), indices.end(), prev_index);
-                if (it == indices.end()) { 
-                    is_subseq = false;
-                    break;
-                }
-                prev_index = *it;
+    unordered_map<string, int> matched;
+    bool isSubsequence(string& s, string& word) {
+        if (matched[word]) return true;
+        
+        for (int i = 0, j = 0; i < s.size(); i++) {
+            if (s[i] == word[j]) j++;
+            
+            if (j == word.size()) {
+                matched[word] = true;
+                return true;
             }
-            if (is_subseq)
-                count++;
         }
-        return count;
-    }
+        return false;
+    } 
 
+    int numMatchingSubseq(string s, vector<string>& words) {
+        int match = 0;
+        for (string& word: words) {
+            if (isSubsequence(s, word))
+                match++;
+        }
+        return match;
+    }
 };
