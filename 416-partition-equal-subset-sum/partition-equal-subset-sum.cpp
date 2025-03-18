@@ -1,27 +1,31 @@
 class Solution {
-    
+    vector<vector<int>> dp;
 public:
     bool canPartition(vector<int>& nums) {
         int K = 0;
         for (int num: nums) K += num;
         if (K & 1) return false;
         K /= 2;
+        dp.resize(nums.size(), vector<int>(K+1, -1));
 
-        vector<vector<int>> dp(nums.size(), vector<int>(2*K, 0));
+        return canPartition(nums.size()-1, K, nums);
+    }
 
-        for (int i = 0; i < nums.size(); i++) {
-            dp[i][0] = true;
-            if (nums[i] <= K) dp[i][nums[i]] = true;
+    bool canPartition(int curr, int sum, const vector<int>& nums) {
+        int& ret = dp[curr][sum];
+        if (ret != -1) return ret;
+
+        if (curr == 0) {
+            ret = (nums[curr] == sum);
+            return ret;
         }
 
-        for (int i = 1; i < nums.size(); i++) {
-            for (int s = 0; s <= K; s++) {
-                dp[i][s] = (dp[i-1][s]) ||
-                (s >= nums[i] && dp[i-1][s-nums[i]]);
-            }
-            if (dp[i][K]) return true;
-        }
+        if (canPartition(curr-1, sum, nums)) 
+            return ret = true;
 
-        return false;
+        if (sum >= nums[curr])
+            return ret = canPartition(curr-1, sum - nums[curr], nums);
+
+        return ret = false;
     }
 };
