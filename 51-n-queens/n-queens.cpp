@@ -20,7 +20,6 @@ public:
             return;
         }
 
-        string row;
         int loffset, roffset;
         for (int x = 0; x < N; x++) {
             if (visited_x[x]) continue;
@@ -31,8 +30,7 @@ public:
             visited_left_offset[loffset] = true;
             visited_right_offset[roffset] = true;
 
-            row = string(x, '.') + 'Q' + string(N-x-1, '.');
-            board.push_back(row);
+            board.push_back(string(x, '.') + 'Q' + string(N-x-1, '.'));
             backtracking(y+1, board, ret);
 
             board.pop_back();
