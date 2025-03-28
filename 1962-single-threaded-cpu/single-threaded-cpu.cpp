@@ -27,7 +27,7 @@ public:
         priority_queue<vll, vector<vll>, cmp> availables;
     
         ll t = 0;
-        for (int i = 0; i < enqueue.size(); ) {
+        for (int i = 0; i < enqueue.size() || !availables.empty(); ) {
             debug(t);
             if (availables.empty() && t < enqueue[i][0]) 
                 t = enqueue[i][0];
@@ -47,13 +47,6 @@ public:
             }
         }
         
-        while (!availables.empty()) {
-            const vll& proc = availables.top();
-            debug(proc[2]);
-            ret.push_back(proc[2]);
-            t += proc[1];
-            availables.pop();
-        }
         return ret;
     }
 };
