@@ -7,7 +7,6 @@
 #endif
 
 class Solution {
-    int N;
     vector<int> leftsubsetsum, rightsubsetsum;
     void subsetsum(int curr, vector<int>& nums, vector<int>& stack,
                    vector<int>& ret) {
@@ -28,7 +27,7 @@ class Solution {
 
 public:
     int minAbsDifference(vector<int>& nums, int goal) {
-        N = nums.size();
+        int N = nums.size();
         vector<int> leftnums(nums.begin(), nums.begin() + N / 2);
         vector<int> rightnums(nums.begin() + N / 2, nums.end());
 
@@ -39,7 +38,33 @@ public:
         sort(leftsubsetsum.begin(), leftsubsetsum.end());
         sort(rightsubsetsum.begin(), rightsubsetsum.end());
 
-        return twoPointer(goal);
+        return binarySearch(goal);
+    }
+
+    int binarySearch(int goal) {
+        int minDiff = INT_MAX;
+        for (int x : rightsubsetsum) {
+            auto it = lower_bound(leftsubsetsum.begin(),
+                leftsubsetsum.end(), goal - x);
+            if (it == leftsubsetsum.end()) --it;
+
+            int y = *it;
+            int diff = abs(x + y - goal);
+            minDiff = min(minDiff, diff);
+
+            if (it != leftsubsetsum.begin()) {
+                y = *prev(it);
+                int diff = abs(x + y - goal);
+                minDiff = min(minDiff, diff);
+            }
+
+            if (it != --leftsubsetsum.end()) {
+                y = *next(it);
+                int diff = abs(x + y - goal);
+                minDiff = min(minDiff, diff);            
+            }
+        }
+        return minDiff;
     }
 
     int twoPointer(int goal) {
