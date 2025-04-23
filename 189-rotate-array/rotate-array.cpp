@@ -4,14 +4,8 @@ public:
         int n = nums.size();
         k = k % n;
 
-        vector<int> ret(n, 0);
-        int s = 0;
-        for (int i = n - k; i < n; i++)
-            ret[s] = nums[i], s++;
-
-        for (int i = 0; i < n - k; i++)
-            ret[s] = nums[i], s++;
-        
-        nums = ret;
+        reverse(nums.begin(), nums.end());
+        reverse(nums.begin(), nums.begin() + k);
+        reverse(nums.begin() + k, nums.end());
     }
 };
