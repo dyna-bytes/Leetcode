@@ -31,7 +31,6 @@ public:
         }
 
         int k = findPivot(nums);
-        cout << "k : " << k << endl;
         int s, e;
         if (nums[0] <= target && target <= nums[n - 1 - k]) {
             s = 0, e = n - k;
