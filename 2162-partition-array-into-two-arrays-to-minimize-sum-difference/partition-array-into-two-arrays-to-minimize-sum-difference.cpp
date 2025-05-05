@@ -11,11 +11,11 @@ typedef unsigned long long ull;
 class Solution {
     int N;
     double target;
-    vector<set<int>> leftsubsetsum,
+    vector<vector<int>> leftsubsetsum,
         rightsubsetsum; // {k elems, {subsetsum}}
 
     void subsetsum(int curr, vector<int>& nums, int selected,
-                   vector<set<int>>& ret) {
+                   vector<vector<int>>& ret) {
         if (curr == nums.size()) {
             int sum = 0, k = 0;
             for (ull bit = 1, i = 0; i < curr; bit <<= 1, i++) {
@@ -23,7 +23,7 @@ class Solution {
                     sum += nums[i], k++;
             }
 
-            ret[k].insert(sum);
+            ret[k].push_back(sum);
             return;
         }
 
@@ -49,6 +49,11 @@ public:
         selected = 0;
         subsetsum(0, righthalf, selected, rightsubsetsum);
 
+        for (auto& lsss : leftsubsetsum)
+            sort(lsss.begin(), lsss.end());
+        for (auto& rsss : rightsubsetsum)
+            sort(rsss.begin(), rsss.end());
+
         double min_diff = INT_MAX;
         for (int k = 0; k < leftsubsetsum.size(); k++) {
             auto& lsss = leftsubsetsum[k];
@@ -56,11 +61,14 @@ public:
                 debug(lsum);
 
                 auto& rsss = rightsubsetsum[N / 2 - k];
-                auto rsum = rsss.lower_bound(target - lsum);
-                if (rsum != rsss.end())
+                auto rsum =
+                    lower_bound(rsss.begin(), rsss.end(), target - lsum);
+                if (rsum != rsss.end()) {
                     min_diff = min(min_diff, abs(lsum + *rsum - target));
-                if (rsum != prev(rsss.end()))
-                    min_diff = min(min_diff, abs(lsum + *next(rsum) - target));
+                    if (rsum != prev(rsss.end()))
+                        min_diff =
+                            min(min_diff, abs(lsum + *next(rsum) - target));
+                }
                 if (rsum != rsss.begin())
                     min_diff = min(min_diff, abs(lsum + *prev(rsum) - target));
             }
