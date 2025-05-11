@@ -1,0 +1,77 @@
+#define DBG
+#ifdef DBG
+#define debug(x)                                                               \
+    std::cout << "[ " << __func__ << "](" << __LINE__ << ") " << #x << " is "  \
+              << x << endl
+#else
+#define debug(x)
+#endif
+class Solution {
+    typedef unsigned long long ull;
+    void subsetsum(int curr, int selected, vector<int>& nums,
+                   vector<vector<int>>& ret) {
+        if (curr == nums.size()) {
+            int sum = 0, cnt = 0;
+            for (ull i = 0, bit = 1; i < nums.size(); i++, bit <<= 1) {
+                if (bit & selected)
+                    sum += nums[i], cnt++;
+            }
+            ret[cnt].push_back(sum);
+            return;
+        }
+
+        selected |= (1 << curr);
+        subsetsum(curr + 1, selected, nums, ret);
+        selected &= ~(1 << curr);
+        subsetsum(curr + 1, selected, nums, ret);
+    }
+
+public:
+    bool splitArraySameAverage(vector<int>& nums) {
+        int N = nums.size();
+        int tsum = accumulate(nums.begin(), nums.end(), 0);
+        vector<int> leftset(nums.begin(), nums.begin() + N / 2);
+        vector<int> rightset(nums.begin() + N / 2, nums.end());
+
+        vector<vector<int>> leftsubsetsum(N + 1);
+        vector<vector<int>> rightsubsetsum(N + 1);
+        int bucket = 0;
+        subsetsum(0, bucket, leftset, leftsubsetsum);
+        subsetsum(0, bucket, rightset, rightsubsetsum);
+
+        for (auto& lsss : leftsubsetsum)
+            sort(lsss.begin(), lsss.end());
+        for (auto& rsss : rightsubsetsum)
+            sort(rsss.begin(), rsss.end());
+
+        auto equation = [&](int i, int j, int lsum, int rsum) -> bool {
+            return N * (lsum + rsum) == tsum * (i + j);
+        };
+
+        for (int i = 0; i < leftsubsetsum.size(); i++) {
+            auto& lsss = leftsubsetsum[i];
+            for (int lsum : lsss) {
+                for (int j = 0; j < rightsubsetsum.size(); j++) {
+                    if (i + j == 0 || i + j == N)
+                        continue;
+                    auto& rsss = rightsubsetsum[j];
+                    
+                    // N * (lsum + rsum) == tsum * (i + j)
+                    double rsum = (double)tsum * (i + j) / N - lsum;
+                    if (ceil(rsum) != rsum) continue;
+                    auto it = lower_bound(rsss.begin(), rsss.end(),
+                        (int)rsum);
+                    while (it != rsss.end()) {
+                        int rs = *it;
+                        if (N * (lsum + rs) == tsum * (i + j)){
+                            return true;
+                        }
+                        ++it;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+};
