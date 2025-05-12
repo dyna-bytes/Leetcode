@@ -8,24 +8,21 @@
 #endif
 class Solution {
     typedef unsigned long long ull;
-    void subsetsum(int curr, int selected, vector<int>& nums,
-                   vector<vector<int>>& ret) {
-        if (curr == nums.size()) {
+    void subsetsum(vector<int>& nums, vector<vector<int>>& ret) {
+        int N = nums.size();
+        ull totalSubsets = 1 << N;
+
+        for (ull mask = 0; mask < totalSubsets; mask++) {
             int sum = 0, cnt = 0;
-            for (ull i = 0, bit = 1; i < nums.size(); i++, bit <<= 1) {
-                if (bit & selected)
-                    sum += nums[i], cnt++;
+            for (int i = 0; i < N; i++) {
+                if (mask & (1 << i)) {
+                    sum += nums[i];
+                    cnt++;
+                }
             }
             ret[cnt].push_back(sum);
-            return;
         }
-
-        selected |= (1 << curr);
-        subsetsum(curr + 1, selected, nums, ret);
-        selected &= ~(1 << curr);
-        subsetsum(curr + 1, selected, nums, ret);
     }
-
 public:
     bool splitArraySameAverage(vector<int>& nums) {
         int N = nums.size();
@@ -35,9 +32,9 @@ public:
 
         vector<vector<int>> leftsubsetsum(N + 1);
         vector<vector<int>> rightsubsetsum(N + 1);
-        int bucket = 0;
-        subsetsum(0, bucket, leftset, leftsubsetsum);
-        subsetsum(0, bucket, rightset, rightsubsetsum);
+
+        subsetsum(leftset, leftsubsetsum);
+        subsetsum(rightset, rightsubsetsum);
 
         for (auto& lsss : leftsubsetsum)
             sort(lsss.begin(), lsss.end());
