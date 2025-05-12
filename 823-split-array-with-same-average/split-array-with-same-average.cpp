@@ -54,17 +54,12 @@ public:
                     auto& rsss = rightsubsetsum[j];
                     
                     // N * (lsum + rsum) == tsum * (i + j)
-                    double rsum = (double)tsum * (i + j) / N - lsum;
-                    if (ceil(rsum) != rsum) continue;
+                    int rsum = tsum * (i + j) / N - lsum;
                     auto it = lower_bound(rsss.begin(), rsss.end(),
                         (int)rsum);
-                    while (it != rsss.end()) {
-                        int rs = *it;
-                        if (N * (lsum + rs) == tsum * (i + j)){
-                            return true;
-                        }
-                        ++it;
-                    }
+
+                    if (it == rsss.end()) continue;
+                    if (*it == rsum) return true;
                 }
             }
         }
