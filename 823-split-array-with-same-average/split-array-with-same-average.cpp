@@ -52,8 +52,8 @@ public:
             auto& lsss = leftsubsetsum[i];
             for (int lsum : lsss) {
                 for (int j = 0; j < rightsubsetsum.size(); j++) {
-                    if (i + j == 0 || i + j == N)
-                        continue;
+                    if (i + j == 0 || i + j == N) continue;
+                    if ((tsum * (i + j)) % N) continue;
                     auto& rsss = rightsubsetsum[j];
                     
                     // N * (lsum + rsum) == tsum * (i + j)
