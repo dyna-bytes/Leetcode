@@ -25,7 +25,6 @@ public:
         int time = 0;
         for (int t = 0; t < tasks.size(); t++) {
             time = max(time, t);
-            debug(time);
             while (!holdings.empty() && get<2>(holdings.top()) <= time) {
                 availables.push(holdings.top());
                 holdings.pop();
@@ -42,7 +41,6 @@ public:
 
             auto [weight, index, end_time] = availables.top();
             availables.pop();
-            debug(index);
 
             time = max(time, end_time);
             holdings.push({weight, index, time + tasks[t]});
