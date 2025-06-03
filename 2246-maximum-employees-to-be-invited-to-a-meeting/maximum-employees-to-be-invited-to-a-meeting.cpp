@@ -21,8 +21,9 @@ class Solution {
     vector<pair<int, int>> two_cycles;
     vector<vector<int>> rev_adj;
     vector<int> dp;
-    int cycle_dfs(int curr, int curr_depth, const int runID, const vector<int>& adj, vector<int>& depth) {
-        if (visited[curr] == runID) 
+    int cycle_dfs(int curr, int curr_depth, const int runID,
+                  const vector<int>& adj, vector<int>& depth) {
+        if (visited[curr] == runID)
             return curr_depth - depth[curr];
 
         if (visited[curr])
@@ -30,20 +31,23 @@ class Solution {
 
         visited[curr] = runID;
         depth[curr] = curr_depth;
-        return cycle_dfs(adj[curr], curr_depth+1, runID, adj, depth);
+        return cycle_dfs(adj[curr], curr_depth + 1, runID, adj, depth);
     }
 
     int acycle_dp(int curr, int counter_start, vector<vector<int>>& rev_adj) {
         int& ret = dp[curr];
-        if (ret != -1) return ret;
+        if (ret != -1)
+            return ret;
 
         int max_len = 0;
-        for (int next: rev_adj[curr]) {
-            if (next == counter_start) continue;
+        for (int next : rev_adj[curr]) {
+            if (next == counter_start)
+                continue;
             max_len = max(max_len, 1 + acycle_dp(next, counter_start, rev_adj));
         }
         return ret = max_len;
     }
+
 public:
     int maximumInvitations(vector<int>& favorite) {
         int N = favorite.size();
@@ -53,7 +57,7 @@ public:
         dp.resize(N, -1);
         for (int from = 0; from < N; from++) {
             int to = favorite[from];
-            if (from < to && favorite[to] == from) 
+            if (from < to && favorite[to] == from)
                 two_cycles.push_back({from, to});
 
             rev_adj[to].push_back(from);
@@ -61,18 +65,16 @@ public:
 
         int max_cycle_len = 0;
         for (int n = 0; n < N; n++) {
-            max_cycle_len = max(max_cycle_len,
-                cycle_dfs(n, 1, n+1, favorite, depth));
+            max_cycle_len =
+                max(max_cycle_len, cycle_dfs(n, 1, n + 1, favorite, depth));
         }
-        debug(max_cycle_len);
 
         int sum_acycle_Len = 0;
-        for (auto& [from, to]: two_cycles) {
+        for (auto& [from, to] : two_cycles) {
             int u = 1 + acycle_dp(from, to, rev_adj);
             int v = 1 + acycle_dp(to, from, rev_adj);
             sum_acycle_Len += (u + v);
         }
-        debug(sum_acycle_Len);
 
         return max(max_cycle_len, sum_acycle_Len);
     }
