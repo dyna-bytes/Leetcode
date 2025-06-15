@@ -1,28 +1,20 @@
 class Solution {
-    vector<int> dp;
 public:
     int lengthOfLIS(vector<int>& nums) {
-        dp.resize(nums.size(), -1);
-        int ans = 0;
-        for (int i = 0; i < nums.size(); i++)
-            ans = max(ans, f(i, nums));
-        return ans;
-    }
+        vector<int> lastValOfLen; // 길이가 i인 부분 증가 수열의 마지막 항 중 최소값
 
-    int f(int idx, vector<int>& nums) {
-        if (idx >= nums.size()) return 0;
-
-        int& ret = dp[idx];
-        if (ret != -1) return ret;
-
-        ret = 1;
-
-        for (int i = idx + 1; i < nums.size(); i++) {
-            if (nums[idx] < nums[i])
-                ret = max(ret, 1 + f(i, nums));
+        for (int i = 0; i < nums.size(); i++) {
+            if (!lastValOfLen.size() || lastValOfLen.back() < nums[i])
+                lastValOfLen.push_back(nums[i]);
+            else if (lastValOfLen.front() > nums[i])
+                lastValOfLen[0] = nums[i];
+            else {
+                auto it = lower_bound(lastValOfLen.begin(),
+                    lastValOfLen.end(), nums[i]);
+                *it = nums[i];
+            }
         }
 
-        return ret;
+        return lastValOfLen.size();
     }
-
 };
