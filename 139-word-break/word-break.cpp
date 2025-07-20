@@ -20,7 +20,19 @@ public:
         return ret;
     }
     bool wordBreak(string s, vector<string>& wordDict) {
-        dp.resize(s.size() + 1, -1);
-        return wrdBrk(s, wordDict);
+        int N = s.size();
+        dp.resize(N + 1, 0);
+
+        for (int i = 0; i < N; i++) {
+            string curr_s = s.substr(i);
+
+            for (string& word: wordDict) {
+                if (isMatch(curr_s, word)) {
+                    if (i == 0) dp[i] = true;
+                    if (dp[i] == true) dp[i + word.size()] = true;
+                }
+            }
+        }
+        return dp[N];
     }
 };
