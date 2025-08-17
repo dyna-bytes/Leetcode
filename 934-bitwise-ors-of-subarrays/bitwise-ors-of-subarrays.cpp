@@ -1,23 +1,30 @@
 class Solution {
     int N;
-    unordered_set<int> total_ors;
-    unordered_set<int> current_ors; // arr[i] 로 끝나는 서브배열들의 or 값
-    unordered_set<int> previous_ors; // arr[i-1] 로 끝나는 서브배열들의 or 값
+    unordered_map<int, unordered_set<int>> dp;
+    unordered_set<int>& f(int curr, vector<int>& arr) {
+        if (curr >= N) {
+            return dp[curr];
+        }
 
+        if (dp.count(curr)) return dp[curr];
+        unordered_set<int>& ret = dp[curr];
+        unordered_set<int>& prev_ors = f(curr + 1, arr);
+        
+        ret.insert(arr[curr]);
+        for (auto p_or: prev_ors)
+            ret.insert(p_or | arr[curr]);
+
+        return ret;
+    }
 public:
     int subarrayBitwiseORs(vector<int>& arr) {
         N = arr.size();
+        unordered_set<int> total_ors;
+
         for (int i = 0; i < N; i++) {
-            previous_ors = current_ors;
-            current_ors.clear();
-
-            current_ors.insert(arr[i]);
-            for (auto p: previous_ors) 
-                current_ors.insert(p | arr[i]);
-
-            total_ors.insert(current_ors.begin(), current_ors.end());
+            auto& ors = f(i, arr);
+            total_ors.insert(ors.begin(), ors.end());
         }
-
         return total_ors.size();
     }
 };
