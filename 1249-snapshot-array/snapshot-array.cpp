@@ -1,35 +1,23 @@
 class SnapshotArray {
-    vector<map<int, int>> arr; // {index, {snap_id, val}}
-    int g_snap_id;
+	int g_snap_id;
+	vector<map<int, int>> history;
 public:
-    SnapshotArray(int length) {
-        arr.resize(length);
-        for (int i = 0; i < length; i++)
-            arr[i][-1] = 0;
-
-        g_snap_id = -1;
-    }
-    
-    void set(int index, int val) {
-        auto& snaps = arr[index];
-        if (snaps.rbegin()->second == val) {
-            return;
-        }
-
-        arr[index][g_snap_id + 1] = val; 
-    }
-    
-    int snap() {
-        g_snap_id++;
-        return g_snap_id;
-    }
-    
-    int get(int index, int snap_id) {
-        auto& snaps = arr[index];
-        auto& prev_or_curr_snap = --snaps.upper_bound(snap_id);
-
-        return prev_or_curr_snap->second;
-    }
+	SnapshotArray(int length) {
+		g_snap_id = 0;
+		history.resize(length);
+	}
+	void set(int index, int val) {
+		history[index][g_snap_id] = val;
+	}
+	int snap() {
+		return (++g_snap_id) - 1;
+	}
+	int get(int index, int snap_id) {
+		if (snap_id < 0 || snap_id >= g_snap_id) return -1;
+		auto it = history[index].upper_bound(snap_id);
+		if (it == history[index].begin()) return 0;
+		return (--it)->second;
+	}
 };
 
 /**
