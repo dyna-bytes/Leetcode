@@ -1,80 +1,107 @@
 class MKAverage {
-    int m, k, sum = 0;
+    int m, k;
+    long long mid_sum;
     queue<int> q;
-    multiset<int> lo, mid, hi;
-    void rebalance(int num) {
-        if (num < *lo.rbegin()) {
-            lo.insert(num);
+    multiset<int> left, mid, right;
 
-            int x = *lo.rbegin();
-            lo.erase(--lo.end());
-            mid.insert(x);
-            sum += x;
-        } else if (num > *hi.begin()) {
-            hi.insert(num);
+    void deletingRebalance() {
+        if (left.size() < k) {
+            auto mid_bottom = mid.begin();
+            left.insert(*mid_bottom);
 
-            int x = *hi.begin();
-            hi.erase(hi.begin());
-            mid.insert(x);
-            sum += x;
-        } else {
-            mid.insert(num);
-            sum += num;
+            mid_sum -= *mid_bottom;
+            mid.erase(mid_bottom);
+        } else if (right.size() < k) {
+            auto mid_top = --mid.end();
+            right.insert(*mid_top);
+
+            mid_sum -= *mid_top;
+            mid.erase(mid_top);
         }
     }
-    void postRebalance(void) {
-        if (lo.size() < k) {
-            int x = *mid.begin();
-            mid.erase(mid.begin());
-            lo.insert(x);
-            sum -= x;
-        } else if (hi.size() < k) {
-            int x = *mid.rbegin();
-            mid.erase(--mid.end());
-            hi.insert(x);
-            sum -= x;
+    void insertingRebalance(int num) {
+        auto left_top = --left.end();
+        auto right_bottom = right.begin();
+        if (num < *left_top) {
+            left.insert(num);
+
+            mid.insert(*left_top);
+            mid_sum += *left_top;
+            
+            left.erase(left_top);
+        } else if (num > *right_bottom) {
+            right.insert(num);
+
+            mid.insert(*right_bottom);
+            mid_sum += *right_bottom;
+
+            right.erase(right_bottom);
+        } else {
+            mid.insert(num);
+            mid_sum += num;
         }
     }
 public:
-    MKAverage(int m, int k) : m(m), k(k) {
+    MKAverage(int m, int k) {
+        this->m = m;
+        this->k = k;
+        mid_sum = 0;
     }
     
     void addElement(int num) {
-        
-        auto removeNum = [&](multiset<int>& ms, int n) {
-            auto it = ms.find(n);
-            if (it == ms.end()) return false;
-            ms.erase(it);
+        auto removeNum = [&] (multiset<int>& group, int x) {
+            auto it = group.find(x);
+            if (it == group.end()) return false;
+            group.erase(it);
             return true;
         };
 
         q.push(num);
-        if (q.size() < m) mid.insert(num);
-        else if (q.size() == m) {
+        if (q.size() < m) {
             mid.insert(num);
+            mid_sum += num;
+        } else if (q.size() == m) {
+            mid.insert(num);
+            mid_sum += num;
+
+            // construct left and right.
+            // left size = k
+            // right size = k
+            // mid size = m - 2k
             for (int i = 0; i < k; i++) {
-                lo.insert(*mid.begin());
-                mid.erase(mid.begin());
-                hi.insert(*mid.rbegin());
-                mid.erase(--mid.end());
+                auto mid_bottom = mid.begin();
+
+                left.insert(*mid_bottom);
+                mid_sum -= *mid_bottom;
+                mid.erase(mid_bottom);
             }
-            for (int x : mid) sum += x;
+
+            for (int i = 0; i < k; i++) {
+                auto mid_top = --mid.end();
+
+                right.insert(*mid_top);
+                mid_sum -= *mid_top;
+                mid.erase(mid_top);
+            }
         } else if (q.size() > m) {
-            rebalance(num);
+            // left size = k
+            // right size = k
+            // mid size = m - 2k + 1
+            insertingRebalance(num);
 
-            int rm = q.front(); q.pop();
-            if (removeNum(mid, rm))
-                sum -= rm;
-            else if (removeNum(lo, rm)) ;
-            else removeNum(hi, rm) ;
-
-            postRebalance();
+            int x = q.front(); q.pop();
+            if (removeNum(mid, x)) // mid size = m - 2k, left size = right size = k
+                mid_sum -= x;
+            else if (removeNum(left, x)) ; // left size = k - 1, right size = k, mid size = m - 2k + 1
+            else removeNum(right, x) ; // right size = k - 1, left size = k, mid size = m - 2k + 1
+            
+            deletingRebalance();
         }
     }
     
     int calculateMKAverage() {
         if (q.size() < m) return -1;
-        return sum / (m - 2*k);
+        return mid_sum / (m - 2 * k);
     }
 };
 
