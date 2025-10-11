@@ -1,70 +1,86 @@
+#define debug(x) cout << #x << " is " << x << endl;
 class MKAverage {
     int m, k;
-    long long mid_sum = 0;
+    long long mid_sum;
     queue<int> q;
-    multiset<int> left, mid, right;
-    bool remove_from_set(multiset<int>& ms, int x) {
-        auto it = ms.find(x);
-        if (it == ms.end()) return false;
-        ms.erase(it);
-        return true;
+    multiset<int> lo, mid, hi;
+    void insert(int num) {
+        if (lo.size() < k || num <= *lo.rbegin())
+            lo.insert(num);
+        else if (hi.size() < k || num < *hi.begin()) {
+            mid.insert(num);
+            mid_sum += num;
+        } else
+            hi.insert(num);
     }
 
-    void rebalance_pull_left() {
-        while (left.size() < k) {
-            auto it = mid.begin();
-            left.insert(*it);
-            mid_sum -= *it;
+    int remove(int x) {
+        auto it = lo.find(x);
+        if (it != lo.end()) {
+            lo.erase(it);
+            return 0;
+        } 
+
+        it = mid.find(x);
+        if (it != mid.end()) {
             mid.erase(it);
+            mid_sum -= x;
+            return 0;
         }
 
-        while (mid.size() < m - 2*k) {
-            auto it = right.begin();
-            mid.insert(*it);
-            mid_sum += *it;
-            right.erase(it);
-        }  
+        it = hi.find(x);
+        if (it != hi.end()) {
+            hi.erase(it);
+            return 0;
+        }
+        return -1;
     }
-
-    void rebalance_push_right() {
-        while (left.size() > k) {
-            auto it = --left.end();
-            mid.insert(*it);
-            mid_sum += *it;
-            left.erase(it);
+    void rebalance() {
+        while (lo.size() > k) {
+            mid.insert(*lo.rbegin());
+            mid_sum += *lo.rbegin();
+            lo.erase(--lo.end());
         }
-
-        while (mid.size() > m - 2*k) {
-            auto it = --mid.end();
-            right.insert(*it);
-            mid_sum -= *it;
-            mid.erase(it);
+        while (hi.size() > k) {
+            mid.insert(*hi.begin());
+            mid_sum += *hi.begin();
+            hi.erase(hi.begin());
+        }
+        while (lo.size() < k && !mid.empty()) {
+            lo.insert(*mid.begin());
+            mid_sum -= *mid.begin();
+            mid.erase(mid.begin());
+        }
+        while (hi.size() < k && !mid.empty()) {
+            hi.insert(*mid.rbegin());
+            mid_sum -= *mid.rbegin();
+            mid.erase(prev(mid.end()));
         }
     }
 public:
     MKAverage(int m, int k) {
         this->m = m;
         this->k = k;
+        mid_sum = 0;
     }
+
     
     void addElement(int num) {
-        if (q.size() >= m) {
-            int x = q.front();
-            q.pop();
-
-            if (remove_from_set(left, x)) ;
-            else if (remove_from_set(right, x)) ;
-            else if (remove_from_set(mid, x)) mid_sum -= x;
-            rebalance_pull_left();
-        }
         q.push(num);
-        left.insert(num);
-        rebalance_push_right();
+        insert(num);
+
+        if (q.size() > m) {
+            remove(q.front());
+            q.pop();
+        }
+        if (q.size() >= m) {
+            rebalance();
+        }
     }
     
     int calculateMKAverage() {
         if (q.size() < m) return -1;
-        return mid_sum / (m - 2*k);
+        return mid_sum / (m - 2*k); 
     }
 };
 
