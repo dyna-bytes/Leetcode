@@ -1,18 +1,55 @@
+#ifdef DBF
+#define debug(x) cout << #x << " is " << x << endl;
+#else
+#define debug(x)
+#endif
 class Solution {
+    class UnionFind {
+        #define ROOT INT_MIN
+        unordered_map<int, int> parent;
+        unordered_map<int, int> rank;
+    public:
+        UnionFind(vector<int>& nums) {
+            for (int n: nums)
+                parent[n] = ROOT;
+            for (int n: nums)
+                rank[n] = 1;
+        }
+        void merge(int u, int v) {
+            u = find(u);
+            v = find(v);
+            if (u == v) return;
+            rank[u] += rank[v];
+            parent[v] = u;
+        }
+        int find(int u) {
+            if (parent[u] == ROOT) return u;
+            return parent[u] = find(parent[u]);
+        }
+        bool exist(int u) {
+            return parent.count(u);
+        }
+        int returnMaxLength() {
+            int ret = 0;
+            for (auto [node, len]: rank) {
+                ret = max(ret, len);
+            }
+            return ret;
+        }
+    };
 public:
     int longestConsecutive(vector<int>& nums) {
-        unordered_set<int> us, visited;
-        for (int n: nums) us.insert(n);
-        
-        int ret = 0;
-        for (int n: us) {
-            if (us.count(n - 1) || visited.count(n)) continue;
-
-            int i;
-            for (i = 0; us.count(n + i); i++) 
-                visited.insert(n + i);
-            ret = max(ret, i);
+        UnionFind uf(nums);
+        for (int n: nums) {
+            if (uf.exist(n - 1) && uf.find(n - 1) != uf.find(n)) {
+                debug(n - 1);
+                debug(n);
+                debug(uf.find(n - 1));
+                debug(uf.find(n));
+                uf.merge(n - 1, n);
+            }
         }
-        return ret;
+
+        return uf.returnMaxLength();
     }
 };
