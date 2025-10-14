@@ -41,13 +41,8 @@ public:
     int longestConsecutive(vector<int>& nums) {
         UnionFind uf(nums);
         for (int n: nums) {
-            if (uf.exist(n - 1) && uf.find(n - 1) != uf.find(n)) {
-                debug(n - 1);
-                debug(n);
-                debug(uf.find(n - 1));
-                debug(uf.find(n));
+            if (uf.exist(n - 1) && uf.find(n - 1) != uf.find(n)) 
                 uf.merge(n - 1, n);
-            }
         }
 
         return uf.returnMaxLength();
