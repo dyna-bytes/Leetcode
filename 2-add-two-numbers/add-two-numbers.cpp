@@ -17,19 +17,18 @@ class Solution {
             return node;
         }
 
-        if (!l2) {
-            int sum = l1->val + carry;
-            l1->val = sum % 10;
-            l1->next = add(sum / 10, l1->next, nullptr);
-            return l1;
-        }
+        auto addListCarry = [&](ListNode* l, int c) {
+            int sum = l->val + c;
+            l->val = sum % 10;
+            l->next = add(sum / 10, l->next, nullptr);
+            return l;
+        };
 
-        if (!l1) {
-            int sum = l2->val + carry;
-            l2->val = sum % 10;
-            l2->next = add(sum / 10, l2->next, nullptr);
-            return l2;
-        } 
+        if (!l2) 
+            return addListCarry(l1, carry);
+
+        if (!l1) 
+            return addListCarry(l2, carry);
 
         int sum = l1->val + l2->val + carry;
         l1->val = sum % 10;
