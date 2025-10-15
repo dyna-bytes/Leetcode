@@ -1,20 +1,43 @@
 /*
-    dp[i] : largest sum of a subarray, that contains nums[i] and ends at i.
-    dp[0] = nums[0]
-    dp[i+1] = max(dp[i] + nums[i+1], nums[i+1])
-    각각의 최대 부분합은 이전 최대 부분합이 반영된 결과값
+divide and conquer
+
+Anser in left, right or middle.
+middle takes O(N)
 */
+#define debug(x) cout << #x << " is " << x << endl;
 
 class Solution {
+    vector<int> nums;
+    // [l, r)
+    int f(int l, int r) {
+        if (l >= r) return INT_MIN;
+        if (l + 1 == r) return nums[l];
+        int ret;
+
+        int m = (l + r)/2;
+        int max_sum = INT_MIN;
+        int lhalf_sum = 0;
+        for (int i = m; i >= l; i--) {
+            lhalf_sum += nums[i];
+            max_sum = max(max_sum, lhalf_sum);
+        }
+
+        ret = max_sum;
+        max_sum = 0;
+
+        int rhalf_sum = 0;
+        for (int i = m + 1; i < r; i++) {
+            rhalf_sum += nums[i];
+            max_sum = max(max_sum, rhalf_sum);
+        }
+
+        ret += max_sum;
+
+        return max({ret, f(l, m), f(m, r)});
+    }
 public:
     int maxSubArray(vector<int>& nums) {
-        int maxSum = nums[0];
-        int sum = nums[0];
-        for (int i = 1; i < nums.size(); i++) {
-            sum = max(sum + nums[i], nums[i]);
-            maxSum = max(maxSum, sum);
-        }
-        return maxSum;
+        this->nums = nums;
+        return f(0, nums.size());
     }
 };
-
