@@ -1,16 +1,19 @@
+/*
+    dp[i] : largest sum of a subarray, that contains nums[i] and ends at i.
+    dp[0] = nums[0]
+    dp[i+1] = max(dp[i] + nums[i+1], nums[i+1])
+*/
+
 class Solution {
 public:
     int maxSubArray(vector<int>& nums) {
-        // cursum : 0보다 크거나 같은 값만 거르는 필터
-        // subarr 의 합이 음수라면, 버리고 다시 시작하는게 항상 이득임
-        int cursum = 0;
-        int maxsum = nums[0];
-
-        for (int num: nums) {
-            cursum = max(cursum, 0);
-            cursum += num;
-            maxsum = max(maxsum, cursum);
+        int maxSum = nums[0];
+        int sum = nums[0];
+        for (int i = 1; i < nums.size(); i++) {
+            sum = max(sum + nums[i], nums[i]);
+            maxSum = max(maxSum, sum);
         }
-        return maxsum;
+        return maxSum;
     }
 };
+
