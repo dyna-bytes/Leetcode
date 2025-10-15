@@ -1,5 +1,5 @@
 class Solution {
-    unordered_map<char, int> um;
+    map<char, int> um;
 public:
     Solution () {
         um['I'] = 1;
@@ -10,7 +10,7 @@ public:
         um['D'] = 500;
         um['M'] = 1000;
     }
-    
+
     int romanToInt(string s) {
         int num = 0;
         for (int i = 0; i < s.size(); i++) {
