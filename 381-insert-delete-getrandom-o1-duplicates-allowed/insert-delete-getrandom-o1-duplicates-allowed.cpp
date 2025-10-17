@@ -1,6 +1,6 @@
 #define debug(x) cout << #x << " is " << x << endl;
 class RandomizedCollection {
-    unordered_map<int, vector<int>> um;
+    map<int, vector<int>> um;
     vector<int> v;
 public:
     RandomizedCollection() {
@@ -32,7 +32,7 @@ public:
         um[x].pop_back();
         if (um.at(x).size() == 0)
             um.erase(x);
-            
+
         return true;
     }
     
