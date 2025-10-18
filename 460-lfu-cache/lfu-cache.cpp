@@ -70,7 +70,6 @@ public:
         return front;
     }
     node* getNodeWithoutCount(int key) {
-        debugSeq(hash);
         if (hash.count(key) == 0) return NULL;
         return hash[key];
     }
@@ -82,7 +81,6 @@ public:
 
         deleteNode(curr);
         insertLast(curr);
-        debugSeq(hash);
         return curr->val;
     }
     
@@ -90,7 +88,6 @@ public:
         if (get(key) != -1) {
             node* curr = hash[key];
             curr->val = value;
-            debugSeq(hash);
             return;
         }
         
@@ -104,7 +101,6 @@ public:
         hash[key] = curr;
         insertLast(curr);
         size++;
-        debugSeq(hash);
     }
 };
 
@@ -119,7 +115,6 @@ public:
     }
     
     int get(int key) {
-        debug(key);
         if (counts.find(key) == counts.end()) return -1;
         int cnt = counts[key];
         node* curr = freq[cnt]->getNodeWithoutCount(key);
@@ -139,8 +134,6 @@ public:
     }
     
     void put(int key, int value) {
-        debug(key);
-        debug(value);
         if (get(key) != -1) {
             node* curr = freq[counts[key]]->getNodeWithoutCount(key);
             curr->val = value;
@@ -166,12 +159,6 @@ public:
             freq[cnt] = new LRUCache();
         freq[cnt]->put(key, value);
         size++;
-
-        debugSeq(counts);
-        for (auto [c, p]: freq) {
-            debug(c);
-            debugSeq(*p->getHash());
-        }
     }
 };
 
