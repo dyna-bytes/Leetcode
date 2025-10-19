@@ -12,54 +12,50 @@
 #endif
 
 class Allocator {
-    int n;
     vector<int> mem;
-    unordered_map<int, vector<int>> hash;
+
+    int getChunk(int size) {
+        for (int i = 0; i < mem.size(); i++) {
+            if (mem[i]) continue;
+
+            int neededSize = size;
+            for (int j = i; j < mem.size(); j++) {
+                if (mem[j]) {
+                    i = j;
+                    break;
+                }
+                
+                if (--neededSize == 0)
+                    return j - size + 1;
+            }
+        }
+        return -1;
+    }
+    void markAllocated(int start, int size, int mID) {
+        while (size--)
+            mem[start++] = mID;
+    }
 public:
     Allocator(int n) {
-        this->n = n;
         mem.resize(n, 0);
     }
     
     int allocate(int size, int mID) {
-        debug(size);
-        debug(mID);
-        if (size > n) return -1;
-        int S = -1, E = -1;
-        for (int i = 0; i < n; i++) {
-            if (mem[i]) continue;
-            for (int j = i; j <= n; j++) {
-                if (j - i >= size) {
-                    S = i;
-                    E = j;
-                    break;
-                }
-                if (j < n && mem[j]) {
-                    i = j;
-                    break;
-                }
-                if (S != -1) break;
-            }
-        }
-        debug(S);
-        if (S == -1) return -1;
+        int start = getChunk(size);
+        if (start == -1) return -1;
 
-        for (int i = S; i < E; i++) {
-            mem[i] = mID;
-            hash[mID].push_back(i);
-        }
-        debugVect(mem);
-        return S;
+        markAllocated(start, size, mID);
+        return start;
     }
     
     int freeMemory(int mID) {
-        debug(mID);
-        if (hash.count(mID) == 0) return 0;
-        for (int idx: hash[mID])
-            mem[idx] = 0;
-        int ret = hash[mID].size();
-        hash.erase(mID);
-        return ret;
+        int freed = 0;
+        for (int i = 0; i < mem.size(); i++)
+            if (mem[i] == mID) { 
+                mem[i] = 0;
+                freed++;
+            }
+        return freed;
     }
 };
 
