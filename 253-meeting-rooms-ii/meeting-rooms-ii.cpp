@@ -6,38 +6,28 @@
 class Solution {
 public:
     int minMeetingRooms(vector<vector<int>>& intervals) {
-        sort(intervals.begin(), intervals.end(), [](vector<int>& a, vector<int>&b){
-            if (a[1] == b[1]) return a[0] < b[0];
-            return a[1] < b[1];
-        });
-
-        multimap<int, int> mmp = { {0, 0} }; // {E, S}
-        for (auto& interval: intervals) {
-            int S = interval[0];
-            int E = interval[1];
-
-            auto it = mmp.lower_bound(E);
-            if (it == mmp.begin()) {
-                mmp.insert({E, S});
-                debug("FIRST");
-                debug(E);
-                debug(S);
-            } else {
-                --it;
-                debug("SECOND");
-                debug(it->first);
-                debug(it->second);
-                debug(E);
-                debug(S);
-                while (it != mmp.begin() && it->first > S) --it;
-                if (it->first <= S) {
-                    mmp.erase(it);
-                    mmp.insert({E, S});
-                } else
-                    mmp.insert({E, S});
-            }
-            debug(mmp.size());
+        int n = intervals.size();
+        vector<int> starts(n);
+        vector<int> ends(n);
+        for (int i = 0; i < n; i++) {
+            starts[i] = intervals[i][0];
+            ends[i] = intervals[i][1];
         }
-        return mmp.size();
+
+        sort(starts.begin(), starts.end());
+        sort(ends.begin(), ends.end());
+
+        int s = 0, e = 0;
+        int used = 0;
+        while (s < n) {
+            if (starts[s] >= ends[e]) {
+                used--;
+                e++;
+            }
+
+            used++;
+            s++;
+        }
+        return used;
     }
 };
