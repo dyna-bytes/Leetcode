@@ -1,33 +1,20 @@
-#ifdef DBG
-#define debug(x) cout << #x << " is " << x << endl;
-#else
-#define debug(x)
-#endif
 class Solution {
 public:
     int minMeetingRooms(vector<vector<int>>& intervals) {
-        int n = intervals.size();
-        vector<int> starts(n);
-        vector<int> ends(n);
-        for (int i = 0; i < n; i++) {
-            starts[i] = intervals[i][0];
-            ends[i] = intervals[i][1];
-        }
+        priority_queue<int, vector<int>, greater<int>> pq;
+        sort(intervals.begin(), intervals.end());
 
-        sort(starts.begin(), starts.end());
-        sort(ends.begin(), ends.end());
+        for (auto& interval : intervals) {
+            int s = interval[0];
+            int e = interval[1];
 
-        int s = 0, e = 0;
-        int used = 0;
-        while (s < n) {
-            if (starts[s] >= ends[e]) {
-                used--;
-                e++;
+            if (pq.empty() || pq.top() > s) 
+                pq.push(e);
+            else {
+                pq.pop();
+                pq.push(e);
             }
-
-            used++;
-            s++;
         }
-        return used;
+        return pq.size();
     }
 };
