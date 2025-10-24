@@ -1,23 +1,33 @@
 class Solution {
 public:
     bool isValid(string s) {
-        int opcnt = 0;
         stack<char> st;
         for (char c : s) {
             if (c == ')') {
-                if (!st.empty() &&st.top() == '(')
-                    st.pop(), opcnt++;
+                if (st.empty()) 
+                    return false;
+                else if (st.top() == '(')
+                    st.pop();
+                else
+                    return false;
             } else if (c == '}') {
-                if (!st.empty() &&st.top() == '{')
-                    st.pop(), opcnt++;
+                if (st.empty()) 
+                    return false;
+                else if (st.top() == '{')
+                    st.pop();
+                else
+                    return false;
             } else if (c == ']') {
-                if (!st.empty() &&st.top() == '[')
-                    st.pop(), opcnt++;
-            } else {
-                st.push(c), opcnt++;
-            }
+                if (st.empty()) 
+                    return false;
+                else if (st.top() == '[')
+                    st.pop();
+                else
+                    return false;
+            } else
+                st.push(c);
         }
 
-        return s.size() == opcnt && st.size() == 0;
+        return st.size() == 0;
     }
 };
