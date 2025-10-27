@@ -22,7 +22,7 @@ public:
         for (auto& event: events) {
             if (event[1] == START) sizes.insert(event[2]);
             else if (event[1] == END) sizes.erase(sizes.find(event[2]));
-            else sizes.size() ? ans[event[2]] = *sizes.begin() : 0;
+            else sizes.size() ? ans[event[2]] = *sizes.begin() : -1;
         }
         return ans;
     }
