@@ -1,27 +1,29 @@
 class Solution {
-    typedef pair<int, int> pii;
-    
+    #define START   0
+    #define END     2
+    #define POINT   1 
 public:
     vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
-        int n = queries.size();
-        vector<int> ans(n, -1);
-        sort(intervals.begin(), intervals.end(), [](auto& left, auto& right){
-            return left[1] - left[0] < right[1] - right[0];
-        });
+        vector<vector<int>> events;
 
-        set<pii> q;
-        for (int i = 0; i < n; i++) 
-            q.insert({ queries[i], i });
-
+        int i = 0;
         for (auto& inter: intervals) {
-            int s = inter[0], e = inter[1];
-            auto it = q.lower_bound({s, 0});
-            for (; it != q.end() && it->first <= e; it = q.erase(it)) {
-                int idx = it->second;
-                ans[idx] = e - s + 1;
-            }
+            events.push_back({inter[0], START, inter[1] - inter[0] + 1});
+            events.push_back({inter[1], END, inter[1] - inter[0] + 1});
         }
+
+        for (int i = 0; i < queries.size(); i++) 
+            events.push_back({queries[i], POINT, i});
         
+        sort(events.begin(), events.end());
+
+        multiset<int> sizes;
+        vector<int> ans(queries.size(), -1);
+        for (auto& event: events) {
+            if (event[1] == START) sizes.insert(event[2]);
+            else if (event[1] == END) sizes.erase(sizes.find(event[2]));
+            else sizes.size() ? ans[event[2]] = *sizes.begin() : 0;
+        }
         return ans;
     }
 };
