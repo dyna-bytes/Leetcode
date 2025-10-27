@@ -9,13 +9,13 @@ public:
             return left[1] - left[0] < right[1] - right[0];
         });
 
-        multimap<int, int> q;
+        set<pii> q;
         for (int i = 0; i < n; i++) 
             q.insert({ queries[i], i });
 
         for (auto& inter: intervals) {
             int s = inter[0], e = inter[1];
-            auto it = q.lower_bound(s);
+            auto it = q.lower_bound({s, 0});
             for (; it != q.end() && it->first <= e; it = q.erase(it)) {
                 int idx = it->second;
                 ans[idx] = e - s + 1;
