@@ -4,16 +4,16 @@ class Solution {
     #define POINT   1 
 public:
     vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
-        vector<vector<int>> events;
+        vector<vector<int>> events(intervals.size() * 2 + queries.size());
 
-        int i = 0;
+        int push = 0;
         for (auto& inter: intervals) {
-            events.push_back({inter[0], START, inter[1] - inter[0] + 1});
-            events.push_back({inter[1], END, inter[1] - inter[0] + 1});
+            events[push++] = {inter[0], START, inter[1] - inter[0] + 1};
+            events[push++] = {inter[1], END, inter[1] - inter[0] + 1};
         }
 
         for (int i = 0; i < queries.size(); i++) 
-            events.push_back({queries[i], POINT, i});
+            events[push++] = {queries[i], POINT, i};
         
         sort(events.begin(), events.end());
 
