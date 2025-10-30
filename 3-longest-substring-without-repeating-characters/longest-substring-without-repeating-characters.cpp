@@ -5,13 +5,14 @@ public:
         int n = str.size();
         int maxlen = 0;
 
-        for (int s = 0, e; s < n; s++) {
-            um.clear();
-            for (e = s; e < n; e++) {
-                if (um[str[e]]) break;
-                um[str[e]] = true;
-            }
+        for (int s = 0, e = 0; s < n && e < n; e++) {
+            for (; e < n && um[str[e]] == 0; e++)
+                um[str[e]]++;
+            um[str[e]]++;
             maxlen = max(maxlen, e - s);
+
+            for (; s < n && um[str[e]] > 1; s++)
+                um[str[s]]--;
         }
         return maxlen;
     }
