@@ -24,9 +24,12 @@ class Solution {
     }
 public:
     void findSecretWord(vector<string>& words, Master& master) {
-        random_shuffle(words.begin(), words.end());
+        // random_shuffle(words.begin(), words.end());
+        long long a = 12;
+        long long b = 32;
+        long long p = 10009;
         for (int i = 0, score = 0; i < 30 && score != 6; i++) {
-            string& test = words[0]; //words[rand() % words.size()];
+            string& test = words[((a * rand() + b) % p) % words.size()];
             score = master.guess(test);
 
             vector<string> candidates;
