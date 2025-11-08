@@ -5,8 +5,6 @@ class Solution {
         if (n == 0) return 0;
         if (n == 1) return 1;
 
-        debug(n);
-        debug(bitsize);
         int lsb = 1 << (bitsize - 1);
         if (n == lsb) return 2*n - 1;
 
