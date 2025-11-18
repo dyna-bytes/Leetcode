@@ -3,17 +3,13 @@ class Solution {
 public:
     int waysToSplitArray(vector<int>& nums) {
         int n = nums.size();
-        vector<ll> psum(n + 1, 0);
-
+        vector<ll> prefix(n+1, 0);
         for (int i = 0; i < n; i++)
-            psum[i+1] = psum[i] + nums[i];
+            prefix[i+1] = prefix[i] + nums[i];
 
-        int ans = 0;
-        for (int i = 0; i < n - 1; i++) {
-            if (psum[i + 1] >= psum[n] - psum[i + 1])
-                ans++;
-        }
-
-        return ans;
+        int valid = 0;
+        for (int i = 0; i < n-1; i++)
+            if (prefix[i+1] >= prefix[n] - prefix[i+1]) valid++;
+        return valid;
     }
 };
