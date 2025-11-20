@@ -1,12 +1,19 @@
 class Solution {
+    int get_digit_sum(int num) {
+        int sum = 0;
+        
+        while (num > 0) {
+            int digit = num % 10;
+            sum += digit;
+            num /= 10;
+        }
+        return sum;
+    }
 public:
     int maximumSum(vector<int>& nums) {
         unordered_map<int, multiset<int>> um;
         for (int num: nums) {
-            string s = to_string(num);
-            int dsum = 0;
-            for (int i = 0; i < s.size(); i++)
-                dsum += (s[i] - '0');
+            int dsum = get_digit_sum(num);
 
             um[dsum].insert(num);
         }
