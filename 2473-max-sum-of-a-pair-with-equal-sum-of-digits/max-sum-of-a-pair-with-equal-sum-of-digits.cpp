@@ -11,7 +11,7 @@ class Solution {
     }
 public:
     int maximumSum(vector<int>& nums) {
-        unordered_map<int, multiset<int>> um;
+        map<int, multiset<int>> um;
         for (int num: nums) {
             int dsum = get_digit_sum(num);
 
