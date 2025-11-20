@@ -12,11 +12,10 @@ public:
         }
 
         int maxval = -1;
-        for (auto it: um) {
-            multiset<int>& st = it.second;
-            if (st.size() < 2) continue;
+        for (auto& [dsum, ms]: um) {
+            if (ms.size() < 2) continue;
 
-            maxval = max(maxval, *st.rbegin() + *next(st.rbegin()));
+            maxval = max(maxval, *ms.rbegin() + *next(ms.rbegin()));
         }
         return maxval;
     }
