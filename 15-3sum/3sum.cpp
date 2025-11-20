@@ -1,26 +1,26 @@
-#define debug(x) cout << #x << " is " << x << endl;
 class Solution {
 public:
     vector<vector<int>> threeSum(vector<int>& nums) {
-        vector<vector<int>> ret;
-        unordered_map<int, int> um;
-
+        vector<vector<int>> ans;
+        int n = nums.size();
         sort(nums.begin(), nums.end());
-        for (int i = 0; i < nums.size(); i++) {
+        unordered_map<int, int> hashmap;
+
+        for (int i = 0; i < n; i++) {
             int target = nums[i];
 
-            for (int j = i + 1, k = nums.size() - 1; j < k; ) {
-                int twoSum = nums[j] + nums[k];
-                if (twoSum + target > 0) k--;
-                else if (twoSum + target < 0) j++;
-                else if (um.find(nums[j]) != um.end() && um.find(nums[j])->second == nums[i]) j++, k--;
+            for (int j = i + 1, k = n - 1; j < k; ) {
+                int eq = target + nums[j] + nums[k];
+                if (eq < 0) j++;
+                else if (eq > 0) k--;
+                else if (hashmap.count(nums[j]) && hashmap[nums[j]] == nums[i]) j++, k--;
                 else {
-                    ret.push_back({nums[i], nums[j], nums[k]});
-                    um[nums[j]] = nums[i];
+                    ans.push_back({nums[i], nums[j], nums[k]});
+                    hashmap[nums[j]] = nums[i];
                     j++, k--;
                 }
             }
         }
-        return ret;
+        return ans;
     }
 };
