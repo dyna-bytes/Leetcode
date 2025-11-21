@@ -1,10 +1,19 @@
 class Solution {
 public:
     void sortColors(vector<int>& nums) {
-        priority_queue<int, vector<int>, greater<int>> pq(nums.begin(), nums.end());
-        for (int i = 0; i < nums.size(); i++) {
-            nums[i] = pq.top();
-            pq.pop();
+        int n = nums.size();
+        int lo = 0, mid = 0, hi = n-1;
+
+        while (mid <= hi) {
+            if (nums[mid] == 0) {
+                swap(nums[lo], nums[mid]);
+                lo++, mid++;
+            } else if (nums[mid] == 1) {
+                mid++;
+            } else {
+                swap(nums[mid], nums[hi]);
+                hi--;
+            }
         }
     }
 };
