@@ -1,14 +1,29 @@
 class Solution {
+    typedef long long ll;
 public:
     int findPeakElement(vector<int>& nums) {
-        int prev = 0;
-        int next = 0;
         int n = nums.size();
-        for (int i = 0; i < n; i++) {
-            next = (i == n - 1) ? INT_MIN : nums[i + 1];
-            prev = (i == 0) ? INT_MIN : nums[i - 1];
-            if (prev < nums[i] && nums[i] > next) return i;
+        int lo = -1, mid, hi = n;
+        auto getnum = [&](int idx) {
+            if (idx == -1 || idx == n) return LONG_LONG_MIN;
+            return (ll)nums[idx];
+        };
+
+        while (true) {
+            int mid = (lo + hi)/2;
+            ll left = getnum(mid - 1);
+            ll center = getnum(mid);
+            ll right = getnum(mid + 1);
+            if (left < center && center > right)
+                return mid;
+            else if (left < center && center < right)
+                lo = mid;
+            else if (left > center && center > right)
+                hi = mid;
+            else
+                hi = mid;
         }
+
         return 0;
     }
 };
