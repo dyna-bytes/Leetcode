@@ -14,10 +14,7 @@ public:
                 buf.push(q.front());
                 q.pop();
             }
-            debug(n);
-            debug(q.front());
             q.pop();
-            debug(buf.front());
             
             while (buf.size()) {
                 q.push(buf.front());
