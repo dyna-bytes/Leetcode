@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define debug(x) cout << "[" << __func__ << "]" << #x << " is " << x << endl;
 #define debugSeq(s) do { \
@@ -12,80 +12,52 @@
 #endif
 
 class LRUCache {
-    typedef struct __node {
-        int key;
-        int val;
-        struct __node *prev;
-        struct __node *next;
-    } node;
-
-    node* head;
-    node* tail;
-    node dummy_head = {-1, -1, NULL, NULL};
-    node dummy_tail = {-1, -1, NULL, NULL};
+    typedef pair<int, int> pii;
+    typedef pii page; // { key, val }
     int size;
     int cap;
-    unordered_map<int, node*> hash;
-
-    void initList() {
-        head = &dummy_head;
-        tail = &dummy_tail;
-        head->next = tail;
-        tail->prev = head;
-        size = 0;
-    }
-    void deleteNode(node* curr) {
-        node* prev = curr->prev;
-        node* next = curr->next;
-
-        prev->next = next;
-        next->prev = prev;
-    }
-    void insertLast(node* curr) {
-        node* last = tail->prev;
-
-        last->next = curr;
-        curr->prev = last;
-
-        curr->next = tail;
-        tail->prev = curr;
-    }
+    unordered_map<int, list<page>::iterator> lut;
+    list<page> pages;
 public:
     LRUCache(int capacity) {
+        size = 0;
         cap = capacity;
-        initList();
     }
     
     int get(int key) {
-        if (hash.count(key) == 0) return -1;
+        if (lut.count(key) == 0) return -1;
 
-        node* curr = hash[key];
-
-        deleteNode(curr);
-        insertLast(curr);
-        debugSeq(hash);
-        return curr->val;
+        auto p = lut[key];
+        auto [k, v] = *p;
+        pages.erase(p);
+        pages.push_back({k, v});
+        lut[key] = prev(pages.end());
+        return v;
     }
     
     void put(int key, int value) {
-        if (get(key) != -1) {
-            node* curr = hash[key];
-            curr->val = value;
-            debugSeq(hash);
+        if (lut.count(key)) {
+            auto p = lut[key];
+            auto [k, v] = *p;
+
+            assert(k == key);
+            pages.erase(p);
+            pages.push_back({key, value});
+            lut[key] = prev(pages.end());
             return;
         }
-        
-        if (size >= cap) {
-            hash.erase(head->next->key);
-            deleteNode(head->next);
-            size--;
-        }
 
-        node* curr = new node(key, value, NULL, NULL);
-        hash[key] = curr;
-        insertLast(curr);
-        size++;
-        debugSeq(hash);
+        if (++size > cap) {
+            auto p = pages.begin();
+            auto [k, v] = *p;
+
+            lut.erase(k);
+            pages.pop_front();
+            --size;
+        } 
+
+        pages.push_back({key, value});
+        lut[key] = prev(pages.end());
     }
 };
 
