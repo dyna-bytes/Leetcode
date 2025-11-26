@@ -12,7 +12,7 @@ typedef struct node {
 } Node;
 
 typedef struct {
-    Node* lut[MAXKEY]; // { key: node* }
+    Node** lut; // { key: node* }
 
     int cap;
 
@@ -40,9 +40,8 @@ void insertTail(Node* node, Node* tail) {
 LRUCache* lRUCacheCreate(int capacity) {
     LRUCache* obj = malloc(sizeof(*obj));
     
-    Node** lut = obj->lut;
-    for (int i = 0; i < MAXKEY; i++)
-        lut[i] = NULL;
+    Node** lut = (Node**)calloc(MAXKEY, sizeof(Node*));
+    obj->lut = lut;
 
     obj->cap = capacity;
 
@@ -110,6 +109,9 @@ void lRUCachePut(LRUCache* obj, int key, int value) {
 }
 
 void lRUCacheFree(LRUCache* obj) {
+    if (obj->lut)
+        free(obj->lut);
+
     Node* head = obj->head;
     Node* tail = obj->tail;
     if (head && tail && obj->list_size) {
