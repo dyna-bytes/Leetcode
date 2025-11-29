@@ -14,7 +14,7 @@ int lengthOfLongestSubstring(char* str) {
         seen[str[e]]++;
 
         maxlen = max(maxlen, e - s);
-        for (; s < n && seen[str[e]] > 1; s++)
+        for (; s < e && seen[str[e]] > 1; s++)
             seen[str[s]]--;
     }
     return maxlen;
