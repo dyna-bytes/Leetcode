@@ -1,31 +1,21 @@
 #define ASCII_SIZE 128
 #define max(a, b) ((a) < (b) ? (b) : (a))
-bool check(int s, int e, int** pref) {
-    for (int k = 0; k < ASCII_SIZE; k++)
-        if (pref[k][e] - pref[k][s] > 1) return false;
-    return true;
-}
 
-int lengthOfLongestSubstring(char* s) {
-    int n = strlen(s);
-
-    int** pref = calloc(ASCII_SIZE, sizeof(int *));
-    for (int i = 0; i < ASCII_SIZE; i++)
-        pref[i] = calloc(n + 1, sizeof(int));
-
-    for (int i = 0; i < n; i++) {
-        char ch = s[i];
-        for (int j = 0; j < ASCII_SIZE; j++) 
-            pref[j][i + 1] = pref[j][i] + (ch == j);
-    }
-
+int lengthOfLongestSubstring(char* str) {
+    int n = strlen(str);
     int maxlen = 0;
-    for (int s = 0, e = 1; s < n && e <= n; ) {
-        if (check(s, e, pref)) {
-            maxlen = max(maxlen, e - s);
-            e++;
-        } else
-            s++;
+    int seen[ASCII_SIZE];
+    memset(seen, 0, sizeof(seen));
+
+    for (int s = 0, e = 0; s < n && e < n; e++) {
+        for (; e < n && seen[str[e]] == 0; e++) 
+            seen[str[e]]++;
+
+        seen[str[e]]++;
+
+        maxlen = max(maxlen, e - s);
+        for (; s < n && seen[str[e]] > 1; s++)
+            seen[str[s]]--;
     }
     return maxlen;
 }
