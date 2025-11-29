@@ -7,19 +7,22 @@
 void sortColors(int* nums, int numsSize) {
     int n = numsSize;
 
-    int* count = calloc(3, sizeof(int));
-    for (int i = 0; i < n; i++) 
-        count[nums[i]]++;
-    
-    int i = 0;
-    for (int c = 0; c < 3; c++) {
-        for (int t = 0; t < count[c]; t++)
-            nums[i++] = c;
+    int lo = 0, mid = 0, hi = n -1;
+    while (mid <= hi) {
+        if (nums[mid] == 0) {
+            swap(nums[lo], nums[mid]);
+            lo++, mid++;
+        } else if (nums[mid] == 1)
+            mid++;
+        else if (nums[mid] == 2) {
+            swap(nums[mid], nums[hi]);
+            hi--;
+        }
     }
 }
 
 /*
+ * lo = 0, mid = 0, hi = n - 1
  * [2, 0, 2, 1, 1, 0]
- * [0, 0, 2, 1, 1, 2]
- * [0, 0, 1, 1, 2, 2]
+ * 
 */
