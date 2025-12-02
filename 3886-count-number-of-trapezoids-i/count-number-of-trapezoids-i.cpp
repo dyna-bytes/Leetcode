@@ -1,7 +1,6 @@
 class Solution {
     typedef long long ll;
     const ll mod = 1e9 + 7;
-    vector<ll> dp;
     
     ll pow_mod(ll base, ll exp) {
         ll result = 1;
@@ -13,32 +12,18 @@ class Solution {
         }
         return result;
     }
-
-    ll fact(int n) {
-        if (n == 0) return 1;
-        if (n == 1) return 1;
-        ll& ret = dp[n];
-        if (ret != -1) return ret;
-        return ret = n * fact(n - 1) % mod;
-    }
     
-    ll combi2(int n) {
+    ll combi2(ll n) {
         if (n < 2) return 0;
-        if (n == 2) return 1;
-        ll inv_fact2 = pow_mod(fact(2), mod - 2);
-        ll inv_fact_n_minus_2 = pow_mod(fact(n-2), mod - 2);
-        return fact(n) * inv_fact2 % mod * inv_fact_n_minus_2 % mod;
+        return n * (n - 1) / 2;
     }
 public:
     int countTrapezoids(vector<vector<int>>& points) {
-        size_t max_size = 0;
         unordered_map<ll, vector<ll>> y_groups;
         for (auto& point: points) {
             int x = point[0], y = point[1];
             y_groups[y].push_back(x);
-            max_size = max(max_size, y_groups[y].size());
         }
-        dp.resize(max_size + 1, -1);
 
         unordered_map<ll, ll> choices;
         for (auto& [y, vec]: y_groups)
