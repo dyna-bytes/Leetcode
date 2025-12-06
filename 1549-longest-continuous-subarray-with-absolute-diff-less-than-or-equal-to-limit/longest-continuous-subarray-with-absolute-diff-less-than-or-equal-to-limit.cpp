@@ -23,6 +23,6 @@ public:
                 s++;
             }
         }
-        return e - s;
+        return n - s;
     }
 };
