@@ -1,7 +1,7 @@
 typedef unsigned int u32;
 typedef unsigned long long u64;
 #define HASH_SIZE (2 << 12)
-#define LIST_SIZE (2 << 16)
+#define LIST_SIZE (2 << 12)
 
 typedef struct {
     int head[HASH_SIZE];
