@@ -1,14 +1,19 @@
 typedef long long ll;
 int waysToSplitArray(int* nums, int numsSize) {
     int n = numsSize;
-    ll* pref = calloc(n + 1, sizeof(ll));
-
+    ll total = 0;
     for (int i = 0; i < n; i++)
-        pref[i + 1] = pref[i] + nums[i];
+        total += nums[i];
 
     int cnt = 0;
-    for (int i = 1; i < n; i++)
-        if (pref[i] >= pref[n] - pref[i])
+    ll left_side = 0;
+    ll right_side = 0;
+    for (int i = 0; i < n - 1; i++) {
+        left_side += nums[i];
+        right_side = total - left_side;
+
+        if (left_side >= right_side)
             cnt++;
+    }
     return cnt;
 }
