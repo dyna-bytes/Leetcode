@@ -3,19 +3,23 @@
 
 int trap(int* height, int heightSize) {
     int n = heightSize;
-    int* left = calloc(n, sizeof(int));
-    int* right = calloc(n, sizeof(int));
+    int* stck = calloc(n + 1, sizeof(int)); // monotone decreasing stack. holds previous greater number
+    int sp = 0;
 
-    left[0] = height[0];
-    for (int i = 1; i < n; i++)
-        left[i] = max(left[i - 1], height[i]);
-    
-    right[n-1] = height[n-1];
-    for (int i = n-2; i >= 0; i--)
-        right[i] = max(right[i + 1], height[i]);
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        while (sp && height[stck[sp]] < height[i]) {
+            int curr_top = stck[sp]; // local minimum
+            sp--;
+            if (sp == 0) break;
 
-    int fill = 0;
-    for (int i = 0; i < n; i++)
-        fill += min(left[i], right[i]) - height[i];
-    return fill;
+            int prev_top = stck[sp]; // previous greater height
+            int bound_height = min(height[i], height[prev_top]) - height[curr_top];
+            int dist = i - prev_top - 1;
+            ans += (bound_height * dist);
+        }
+
+        stck[++sp] = i;
+    }
+    return ans;
 }
