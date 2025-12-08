@@ -8,23 +8,14 @@
 
 
 struct ListNode* reverseList(struct ListNode* head) {
-    struct ListNode* stck[1 << 13];
-    int sp = 0;
+    struct ListNode* curr = head;
+    if (!curr) return NULL;
+    struct ListNode* next = head->next;
+    if (!next) return curr;
+    
+    struct ListNode* ret = reverseList(next);
+    next->next = curr;
+    curr->next = NULL;
 
-    for (struct ListNode* curr = head; curr; curr = curr->next)     
-        stck[++sp] = curr;
-
-    struct ListNode* prev = NULL;
-    while (sp > 0) {
-        struct ListNode* curr = stck[sp--];
-        if (prev)
-            prev->next = curr;
-        else 
-            head = curr;
-        
-        prev = curr;
-        curr->next = NULL;
-    }
-
-    return head;
+    return ret;
 }
