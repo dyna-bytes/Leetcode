@@ -1,45 +1,55 @@
 class Solution {
-public:
     typedef long long ll;
+    typedef pair<ll, ll> pll;
+public:
     int mostBooked(int n, vector<vector<int>>& meetings) {
-        set<int> available_rooms;
-        for (int i = 0; i < n; i++) available_rooms.insert(i);
-
-        priority_queue<pair<ll, ll>,
-            vector<pair<ll, ll>>,
-            greater<pair<ll, ll>> > handling_meetings; // {e, room}
-
         sort(meetings.begin(), meetings.end());
 
-        ll max_meeting = 0;
-        vector<ll> rooms(n, 0);
-        for (int i = 0; i < meetings.size(); i++) {
-            while (!handling_meetings.empty() && 
-            handling_meetings.top().first <= meetings[i][0]) {
-                auto [e, room] = handling_meetings.top();
-                handling_meetings.pop();
-                available_rooms.insert(room);
-            }
-
-            ll delayed = 0;
-            if (available_rooms.empty() && !handling_meetings.empty()) {
-                delayed = handling_meetings.top().first - meetings[i][0];
-                auto [e, room] = handling_meetings.top();
-                handling_meetings.pop();
-                available_rooms.insert(room);
-            }
-
-            int room = *available_rooms.begin();
-            available_rooms.erase(available_rooms.begin());
-
-            handling_meetings.push({meetings[i][1] + delayed, room});
-
-            max_meeting = max(++rooms[room], max_meeting);
-        }
+        priority_queue<ll, vector<ll>, greater<ll>> avails;
+        priority_queue<pll, vector<pll>, greater<pll>> runnings; // {end, room}
+        vector<ll> count(n, 0);
 
         for (int i = 0; i < n; i++)
-            if (rooms[i] == max_meeting)
-                return i;
-        return -1;
+            avails.push(i);
+
+        for (vector<int>& meeting: meetings) {
+            ll curr_s = meeting[0];
+            ll curr_e = meeting[1];
+
+            while (runnings.size() && 
+                runnings.top().first <= curr_s) {
+                auto [_, room] = runnings.top();
+                runnings.pop();
+                avails.push(room);
+            }
+
+            if (avails.size()) {
+                int room = avails.top();
+                avails.pop();
+
+                count[room]++;
+                runnings.push({curr_e, room});
+            } else if (runnings.size()) {
+                auto [prev_e, room] = runnings.top();
+                runnings.pop();
+
+                ll delay = prev_e - curr_s;
+                if (delay > 0) 
+                    curr_e += delay;
+                
+                count[room]++;
+                runnings.push({curr_e, room});
+            }
+        }
+
+        int max_count = 0;
+        int rm = 0;
+        for (int i = 0; i < n; i++) {
+            if (max_count < count[i]) {
+                max_count = count[i];
+                rm = i;
+            }
+        }
+        return rm;
     }
 };
