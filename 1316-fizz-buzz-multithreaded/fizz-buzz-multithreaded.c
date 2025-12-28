@@ -16,8 +16,8 @@ FizzBuzz* fizzBuzzCreate(int n) {
     FizzBuzz* obj = (FizzBuzz*) malloc(sizeof(FizzBuzz));
     obj->n = n;
     obj->x = 1;
-    sem_init(&obj->sem, 0, 0);
-    sem_post(&obj->sem);
+    sem_init(&obj->sem, 0, 1);
+    // sem_post(&obj->sem);
     return obj;
 }
 
