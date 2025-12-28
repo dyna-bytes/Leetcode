@@ -1,4 +1,4 @@
-// #define DBG
+#define DBG
 #ifdef DBG
 #define debug(x) \
     printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x)
@@ -9,33 +9,15 @@
 typedef struct {
     int n;
     int x;
-    pthread_mutex_t m;
-    pthread_cond_t c_wake_fizz;
-    pthread_cond_t c_wake_buzz;
-    pthread_cond_t c_wake_fizzbuzz;
-    pthread_cond_t c_wake_number;
-    bool wake_fizz;
-    bool wake_buzz;
-    bool wake_fizzbuzz;
-    bool wake_number;
+    sem_t sem;
 } FizzBuzz;
 
 FizzBuzz* fizzBuzzCreate(int n) {
     FizzBuzz* obj = (FizzBuzz*) malloc(sizeof(FizzBuzz));
     obj->n = n;
     obj->x = 1;
-    
-    pthread_mutex_init(&obj->m, NULL);
-    pthread_cond_init(&obj->c_wake_fizz, NULL);
-    pthread_cond_init(&obj->c_wake_buzz, NULL);
-    pthread_cond_init(&obj->c_wake_fizzbuzz, NULL);
-    pthread_cond_init(&obj->c_wake_number, NULL);
-    
-    obj->wake_fizz = false;
-    obj->wake_buzz = false;
-    obj->wake_fizzbuzz = false;
-    obj->wake_number = true;
-
+    sem_init(&obj->sem, 0, 0);
+    sem_post(&obj->sem);
     return obj;
 }
 
@@ -48,190 +30,74 @@ void printFizzBuzz();
 // printFizz() outputs "fizz".
 void fizz(FizzBuzz* obj) {
     while (true) {
-        debug(obj->x);
-
-        pthread_mutex_lock(&obj->m);
-        while (!obj->wake_fizz)
-            pthread_cond_wait(&obj->c_wake_fizz, &obj->m);
+        sem_wait(&obj->sem);
         if (obj->x > obj->n) {
-            pthread_mutex_unlock(&obj->m);
+            sem_post(&obj->sem);
             return;
         }
 
-        obj->wake_fizz = false;
-        printFizz();
-        obj->x++;
-
-        if (obj->x > obj->n) {
-            obj->wake_fizz = true;
-            obj->wake_buzz = true;
-            obj->wake_fizzbuzz = true;
-            obj->wake_number = true;
-            
-            pthread_cond_signal(&obj->c_wake_fizz);
-            pthread_cond_signal(&obj->c_wake_buzz);
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-            pthread_cond_signal(&obj->c_wake_number);
-        } else if (obj->x % 3 == 0 && obj->x % 5 == 0) { 
-            obj->wake_fizzbuzz = true;
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-        } else if (obj->x % 3 == 0) {
-            obj->wake_fizz = true;
-            pthread_cond_signal(&obj->c_wake_fizz);
-        } else if (obj->x % 5 == 0) {
-            obj->wake_buzz = true;
-            pthread_cond_signal(&obj->c_wake_buzz);
-        } else {
-            obj->wake_number = true;
-            pthread_cond_signal(&obj->c_wake_number);
+        if ((obj->x % 3 == 0) && (obj->x % 5 != 0)) {
+            printFizz();        
+            obj->x++;
         }
-
-        pthread_mutex_unlock(&obj->m);
+        sem_post(&obj->sem);
     }
 }
 
 // printBuzz() outputs "buzz".
 void buzz(FizzBuzz* obj) {
     while (true) {
-        debug(obj->x);
-
-        pthread_mutex_lock(&obj->m);
-        while (!obj->wake_buzz)
-            pthread_cond_wait(&obj->c_wake_buzz, &obj->m);
+        sem_wait(&obj->sem);
         if (obj->x > obj->n) {
-            pthread_mutex_unlock(&obj->m);
+            sem_post(&obj->sem);
             return;
         }
 
-        obj->wake_buzz = false;
-        printBuzz();
-        obj->x++;
-
-        if (obj->x > obj->n) {
-            obj->wake_fizz = true;
-            obj->wake_buzz = true;
-            obj->wake_fizzbuzz = true;
-            obj->wake_number = true;
-            
-            pthread_cond_signal(&obj->c_wake_fizz);
-            pthread_cond_signal(&obj->c_wake_buzz);
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-            pthread_cond_signal(&obj->c_wake_number);
-        } else if (obj->x % 3 == 0 && obj->x % 5 == 0) { 
-            obj->wake_fizzbuzz = true;
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-        } else if (obj->x % 3 == 0) {
-            obj->wake_fizz = true;
-            pthread_cond_signal(&obj->c_wake_fizz);
-        } else if (obj->x % 5 == 0) {
-            obj->wake_buzz = true;
-            pthread_cond_signal(&obj->c_wake_buzz);
-        } else {
-            obj->wake_number = true;
-            pthread_cond_signal(&obj->c_wake_number);
+        if ((obj->x % 3 != 0) && (obj->x % 5 == 0)) {
+            printBuzz();
+            obj->x++;
         }
-
-        pthread_mutex_unlock(&obj->m);
+        sem_post(&obj->sem);
     }
 }
 
 // printFizzBuzz() outputs "fizzbuzz".
 void fizzbuzz(FizzBuzz* obj) {
     while (true) {
-        debug(obj->x);
-
-        pthread_mutex_lock(&obj->m);
-        while (!obj->wake_fizzbuzz)
-            pthread_cond_wait(&obj->c_wake_fizzbuzz, &obj->m);
+        sem_wait(&obj->sem);
         if (obj->x > obj->n) {
-            pthread_mutex_unlock(&obj->m);
+            sem_post(&obj->sem);
             return;
         }
 
-        obj->wake_fizzbuzz = false;
-        printFizzBuzz();
-        obj->x++;
-
-        if (obj->x > obj->n) {
-            obj->wake_fizz = true;
-            obj->wake_buzz = true;
-            obj->wake_fizzbuzz = true;
-            obj->wake_number = true;
-            
-            pthread_cond_signal(&obj->c_wake_fizz);
-            pthread_cond_signal(&obj->c_wake_buzz);
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-            pthread_cond_signal(&obj->c_wake_number);
-        } else if (obj->x % 3 == 0 && obj->x % 5 == 0) { 
-            obj->wake_fizzbuzz = true;
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-        } else if (obj->x % 3 == 0) {
-            obj->wake_fizz = true;
-            pthread_cond_signal(&obj->c_wake_fizz);
-        } else if (obj->x % 5 == 0) {
-            obj->wake_buzz = true;
-            pthread_cond_signal(&obj->c_wake_buzz);
-        } else {
-            obj->wake_number = true;
-            pthread_cond_signal(&obj->c_wake_number);
+        if ((obj->x % 3 == 0) && (obj->x % 5 == 0)) {
+            printFizzBuzz();
+            obj->x++;
         }
-
-        pthread_mutex_unlock(&obj->m);
+        sem_post(&obj->sem);
     }
 }
 
 // You may call global function `void printNumber(int x)`
 // to output "x", where x is an integer.
-void number(FizzBuzz* obj) {    
+void number(FizzBuzz* obj) {
     while (true) {
-        debug(obj->x);
-
-        pthread_mutex_lock(&obj->m);
-        while (!obj->wake_number)
-            pthread_cond_wait(&obj->c_wake_number, &obj->m);
+        sem_wait(&obj->sem);
         if (obj->x > obj->n) {
-            pthread_mutex_unlock(&obj->m);
+            sem_post(&obj->sem);
             return;
         }
 
-        obj->wake_number = false;
-        printNumber(obj->x);
-        obj->x++;
-
-        if (obj->x > obj->n) {
-            obj->wake_fizz = true;
-            obj->wake_buzz = true;
-            obj->wake_fizzbuzz = true;
-            obj->wake_number = true;
-            
-            pthread_cond_signal(&obj->c_wake_fizz);
-            pthread_cond_signal(&obj->c_wake_buzz);
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-            pthread_cond_signal(&obj->c_wake_number);
-        } else if (obj->x % 3 == 0 && obj->x % 5 == 0) { 
-            obj->wake_fizzbuzz = true;
-            pthread_cond_signal(&obj->c_wake_fizzbuzz);
-        } else if (obj->x % 3 == 0) {
-            obj->wake_fizz = true;
-            pthread_cond_signal(&obj->c_wake_fizz);
-        } else if (obj->x % 5 == 0) {
-            obj->wake_buzz = true;
-            pthread_cond_signal(&obj->c_wake_buzz);
-        } else {
-            obj->wake_number = true;
-            pthread_cond_signal(&obj->c_wake_number);
+        if ((obj->x % 3 != 0) && (obj->x % 5 != 0)) {
+            printNumber(obj->x);
+            obj->x++;
         }
-
-        pthread_mutex_unlock(&obj->m);
+        sem_post(&obj->sem);
     }
 }
 
 void fizzBuzzFree(FizzBuzz* obj) {
-    pthread_mutex_destroy(&obj->m);
-    pthread_cond_destroy(&obj->c_wake_fizz);
-    pthread_cond_destroy(&obj->c_wake_buzz);
-    pthread_cond_destroy(&obj->c_wake_fizzbuzz);
-    pthread_cond_destroy(&obj->c_wake_number);
+    sem_destroy(&obj->sem);
 
     if (obj)
         free(obj);
