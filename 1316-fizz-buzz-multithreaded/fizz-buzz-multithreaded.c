@@ -1,4 +1,4 @@
-#define DBG
+// #define DBG
 #ifdef DBG
 #define debug(x) \
     printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x)
