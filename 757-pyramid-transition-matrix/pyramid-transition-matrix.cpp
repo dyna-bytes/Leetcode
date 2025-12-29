@@ -1,7 +1,7 @@
 class Solution {
     unordered_map<string, bool> dp;
     unordered_map<string, vector<char>> allowedset;
-    bool f(int i, string bottom, string top) {
+    bool f(int i, const string& bottom, const string& top) {
         if (bottom.size() <= 1) return true;
 
         if (i + 1 == bottom.size())
