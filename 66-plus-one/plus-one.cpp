@@ -11,13 +11,9 @@ public:
             ret[i] = x % 10;
         }
 
-        if (c) {
-            vector<int> ret2(n + 1, 0);
-            ret2[0] = c;
-            for (int i = 0; i < n; i++)
-                ret2[i + 1] = ret[i];
-            return ret2;
-        }
+        if (c) 
+            ret.insert(ret.begin(), c);
+        
         return ret;
     }
 };
