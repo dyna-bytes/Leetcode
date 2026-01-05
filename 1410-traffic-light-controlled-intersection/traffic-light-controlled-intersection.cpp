@@ -20,19 +20,11 @@ public:
         function<void()> crossCar    // Use crossCar() to make car cross the intersection
     ) {
         m.lock();
-        if (isRoadA(roadId) && passA) {
-            crossCar();
-        } else if (isRoadA(roadId) && !passA) {
-            passA = true;
+        if (isRoadA(roadId) != passA) {
             turnGreen();
-            crossCar();
-        } else if (!isRoadA(roadId) && passA) {
-            passA = false;
-            turnGreen();
-            crossCar();
-        } else {
-            crossCar();
+            passA =! passA;
         }
+        crossCar();
         m.unlock();
     }
 };
