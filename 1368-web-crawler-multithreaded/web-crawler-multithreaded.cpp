@@ -104,7 +104,7 @@ class Solution {
 public:
     vector<string> crawl(string startUrl, HtmlParser htmlParser) {
         this->htmlParser = &htmlParser;
-        this->threadPool = new ThreadPool(16);
+        this->threadPool = new ThreadPool(256);
 
         visited.insert(startUrl);
         threadPool->enqueueJob([&]() { dfs(startUrl); });
