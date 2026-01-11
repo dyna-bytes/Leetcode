@@ -83,7 +83,7 @@ class Solution {
     HtmlParser *htmlParser;
     ThreadPool *threadPool;
 
-    void dfs(string currUrl) {
+    void dfs(const string& currUrl) {
         string hostname = get_hostname(currUrl);
         vector<string> urls = htmlParser->getUrls(currUrl);
 
