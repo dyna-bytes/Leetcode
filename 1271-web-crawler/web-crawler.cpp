@@ -18,26 +18,27 @@ class Solution {
         p = strtok(NULL, "/");
         return string(p);
     }
-
-    HtmlParser *htmlParser;
-
-    void dfs(string& currUrl) {
-        string hostname = get_hostname(currUrl);
-        vector<string> urls = htmlParser->getUrls(currUrl);
-
-        for (string& url: urls) {
-            if (hostname != get_hostname(url)) continue;
-            if (visited.count(url)) continue;
-
-            visited.insert(url);
-            dfs(url);
-        }
-    }
 public:
     vector<string> crawl(string startUrl, HtmlParser htmlParser) {
-        this->htmlParser = &htmlParser;
+        queue<string> q;
+
+        q.push(startUrl);
         visited.insert(startUrl);
-        dfs(startUrl);
+
+        while (q.size()) {
+            string currUrl = q.front(); q.pop();
+
+            string hostname = get_hostname(currUrl);
+            vector<string> urls = htmlParser.getUrls(currUrl);
+
+            for (string& url: urls) {
+                if (hostname != get_hostname(url)) continue;
+                if (visited.count(url)) continue;
+
+                visited.insert(url);
+                q.push(url);
+            }
+        }
         
         return vector<string>(visited.begin(), visited.end());
     }
