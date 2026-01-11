@@ -12,11 +12,12 @@ class Solution {
     unordered_set<string> visited;
 
     string get_hostname(const string& url) {
-        char s[300];
-        strcpy(s, url.c_str());
-        char* p = strtok(s, "//");
-        p = strtok(NULL, "/");
-        return string(p);
+        size_t start = url.find("://");
+        if (start == string::npos) return "";
+        start += 3;
+        size_t end = url.find('/', start);
+        if (end == string::npos) return url.substr(start);
+        return url.substr(start, end - start);
     }
 public:
     vector<string> crawl(string startUrl, HtmlParser htmlParser) {
