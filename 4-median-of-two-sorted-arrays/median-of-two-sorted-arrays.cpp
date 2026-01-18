@@ -63,15 +63,6 @@ public:
                 return (double)(max(maxL1, maxL2) + min(minR1, minR2)) / 2;
             }
         }
-
-        i = lo;
-        j = (m + n) / 2 - i;
-
-        debug(i);
-        debug(j);
-        if ((m + n) & 1)
-            return (double)min(nums1[i], nums2[j]);
-        return (double)(max(nums1[i - 1], nums2[j - 1]) +
-                        min(nums1[i], nums2[j])) / 2;
+        return 0;
     }
 };
