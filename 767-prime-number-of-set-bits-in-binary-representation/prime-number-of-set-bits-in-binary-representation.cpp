@@ -19,8 +19,7 @@ public:
 
         int ret = 0;
         for (int i = left; i <= right; ++i) {
-            bitset<32> b(i);
-            int cnt = b.count();
+            int cnt = __builtin_popcount(i);
             if (is_prime(cnt)) ret++;
         }
         return ret;
