@@ -31,8 +31,11 @@ void first(Foo* obj) {
 
     // printFirst() outputs "first". Do not change or remove this line.
     printFirst();
+
+    pthread_mutex_lock(&obj->m);
     obj->cnt = 1;
     pthread_cond_broadcast(&obj->cv);
+    pthread_mutex_unlock(&obj->m);
 }
 
 void second(Foo* obj) {
@@ -43,8 +46,11 @@ void second(Foo* obj) {
     
     // printSecond() outputs "second". Do not change or remove this line.
     printSecond();
+
+    pthread_mutex_lock(&obj->m);
     obj->cnt = 2;
     pthread_cond_broadcast(&obj->cv);
+    pthread_mutex_unlock(&obj->m);
 }
 
 void third(Foo* obj) {
@@ -55,12 +61,18 @@ void third(Foo* obj) {
     
     // printThird() outputs "third". Do not change or remove this line.
     printThird();
+
+    pthread_mutex_lock(&obj->m);
     obj->cnt = 0;
     pthread_cond_broadcast(&obj->cv);
+    pthread_mutex_unlock(&obj->m);
 }
 
 void fooFree(Foo* obj) {
     // User defined data may be cleaned up here.
+    pthread_mutex_destroy(&obj->m);
+    pthread_cond_destroy(&obj->cv);
+
     if (obj)
         free(obj);
 }
