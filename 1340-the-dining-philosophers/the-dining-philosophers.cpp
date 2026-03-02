@@ -1,41 +1,37 @@
 class Semaphore {
-    int count; // "현재 사용 가능한 자원의 수" (음수 안 됨)
+    int resources;
     pthread_mutex_t m;
     pthread_cond_t cv;
-
 public:
-    Semaphore(int init_token) : count(init_token) {
+    Semaphore(int resources) : resources(resources) {
         pthread_mutex_init(&m, NULL);
         pthread_cond_init(&cv, NULL);
     }
 
     void wait() {
         pthread_mutex_lock(&m);
-        
-        while (count == 0) 
+        while (resources <= 0)
             pthread_cond_wait(&cv, &m);
-        
-        count--; 
-        
+
+        resources--;
         pthread_mutex_unlock(&m);
     }
 
-    void signal() {
+    void post() {
         pthread_mutex_lock(&m);
-        
-        count++;
+        resources++;
         pthread_cond_signal(&cv);
-        
         pthread_mutex_unlock(&m);
     }
 };
 
 class DiningPhilosophers {
+    #define MAX_FORKS 5
     Semaphore sem;
-    pthread_mutex_t forks[5];
+    pthread_mutex_t forks[MAX_FORKS];
 public:
-    DiningPhilosophers() : sem(4) {
-        for (int i = 0; i < 5; i++)
+    DiningPhilosophers() : sem(MAX_FORKS - 1) {
+        for (int i = 0; i < MAX_FORKS; ++i)
             pthread_mutex_init(&forks[i], NULL);
     }
 
@@ -45,23 +41,23 @@ public:
                     function<void()> eat,
                     function<void()> putLeftFork,
                     function<void()> putRightFork) {
-        int left = philosopher;
-        int right = (philosopher + 1) % 5;
+		int left = philosopher;
+        int right = (philosopher + 1) % MAX_FORKS;
 
-		sem.wait();
-
+        sem.wait();
         pthread_mutex_lock(&forks[left]);
         pthread_mutex_lock(&forks[right]);
 
         pickLeftFork();
         pickRightFork();
+
         eat();
+
         putLeftFork();
         putRightFork();
 
-        pthread_mutex_unlock(&forks[right]);
         pthread_mutex_unlock(&forks[left]);
-
-        sem.signal();
+        pthread_mutex_unlock(&forks[right]);
+        sem.post();
     }
 };
