@@ -8,87 +8,149 @@
  */
 #define debug(x) cout << #x << " is " << x << endl;
 
+class Solution;
+
+// Solution 객체 포인터를 포함하여 전달하도록 수정
+struct UserArgs {
+    Solution* obj;
+    string arg;
+};
+
+// 일반 함수 포인터로 변경
+struct Task {
+    void (*taskFunction)(void *);
+    void *args;
+};
+
 class ThreadPool {
-    size_t num_threads;
-    vector<thread> workers;
-    queue<function<void()>> jobs;
-    atomic<int> active_tasks{0};
+private:
+    vector<pthread_t> threads;
+    queue<Task*> taskQueue;
+    pthread_mutex_t mutexQueue;
+    pthread_cond_t condQueue;
+    pthread_cond_t condDone; // 작업이 모두 끝났음을 알리는 조건 변수
     
-    condition_variable cv;
-    mutex m;
-    bool stop_all;
-    void work() {
+    bool shutdown;
+    int activeTasks; // 현재 실행 중인 작업 수 추적
+
+    void workerLoop() {
         while (true) {
-            unique_lock<mutex> lock(m);
-            cv.wait(lock, [this]() {
-                return !this->jobs.empty() || stop_all;
-            });
+            pthread_mutex_lock(&mutexQueue);
             
-            if (this->jobs.empty() && stop_all) {
-                m.unlock();
+            while (taskQueue.empty() && !shutdown) {
+                pthread_cond_wait(&condQueue, &mutexQueue);
+            }
+            
+            if (shutdown && taskQueue.empty()) {
+                pthread_mutex_unlock(&mutexQueue);
                 return;
             }
-            function<void()> job = (jobs.front());
-            jobs.pop();
-            lock.unlock();
             
-            job();
-            active_tasks--;
+            Task* task = taskQueue.front();
+            taskQueue.pop();
+            activeTasks++; // 작업 시작
+            
+            pthread_mutex_unlock(&mutexQueue);
+            
+            // 작업 실행
+            if (task && task->taskFunction) {
+                task->taskFunction(task->args);
+            }
+            
+            // 동적 할당된 메모리 해제
+            delete static_cast<UserArgs*>(task->args);
+            delete task;
+            
+            // 작업 완료 처리
+            pthread_mutex_lock(&mutexQueue);
+            activeTasks--;
+            // 큐가 비어있고, 일하는 스레드도 없다면 모든 크롤링이 끝난 것
+            if (taskQueue.empty() && activeTasks == 0) {
+                pthread_cond_signal(&condDone);
+            }
+            pthread_mutex_unlock(&mutexQueue);
         }
     }
-public:
-    ThreadPool(size_t num_threads) {
-        this->num_threads = num_threads;
-        this->stop_all = false;
-        for (size_t i = 0; i < num_threads; i++)
-            workers.emplace_back([this]() { 
-                this->work(); 
-            });
-    }
-    ~ThreadPool() {
-        stop_all = true;
-        cv.notify_all();
-        for (auto& t: workers)
-            t.join();
-    }
-    
-    void enqueueJob(function<void()> job) {
-        if (stop_all) return;
-        
-        m.lock();
-        active_tasks++;
-        jobs.push(job);
-        cv.notify_one();
-        m.unlock();
+
+    static void* startThread(void* arg) {
+        ThreadPool* pool = (ThreadPool*)(arg);
+        pool->workerLoop();
+        return nullptr;
     }
 
-    size_t size() {
-        return active_tasks;
+public:
+    ThreadPool(size_t numThreads) : shutdown(false), activeTasks(0) {
+        pthread_mutex_init(&mutexQueue, nullptr);
+        pthread_cond_init(&condQueue, nullptr);
+        pthread_cond_init(&condDone, nullptr);
+        
+        threads.resize(numThreads);
+        for (size_t i = 0; i < numThreads; ++i) {
+            if (pthread_create(&threads[i], nullptr, &ThreadPool::startThread, this) != 0) {
+                perror("Failed to create the thread");
+            }
+        }
+    }
+
+    ~ThreadPool() {
+        pthread_mutex_lock(&mutexQueue);
+        shutdown = true;
+        pthread_mutex_unlock(&mutexQueue);
+        
+        pthread_cond_broadcast(&condQueue);
+        
+        for (pthread_t& th : threads) {
+            pthread_join(th, nullptr);
+        }
+        
+        pthread_mutex_destroy(&mutexQueue);
+        pthread_cond_destroy(&condQueue);
+        pthread_cond_destroy(&condDone);
+    }
+
+    void submitTask(Task* task) {
+        pthread_mutex_lock(&mutexQueue);
+        taskQueue.push(task);
+        pthread_mutex_unlock(&mutexQueue);
+        pthread_cond_signal(&condQueue);
+    }
+
+    // 메인 스레드가 크롤링 완료를 기다리게 하는 함수
+    void waitAll() {
+        pthread_mutex_lock(&mutexQueue);
+        while (!taskQueue.empty() || activeTasks > 0) {
+            pthread_cond_wait(&condDone, &mutexQueue);
+        }
+        pthread_mutex_unlock(&mutexQueue);
     }
 };
 
 class Solution {
     unordered_set<string> visited;
     mutex m_visited;
-
-    string get_hostname(const string& url) {
-        char s[300] = {};
-        strcpy(s, url.c_str());
-        char* next_p;
-        char* p = strtok_r(s, "//", &next_p);
-        p = strtok_r(NULL, "/", &next_p);
-        return string(p);
-    }
-
+    
     HtmlParser *htmlParser;
     ThreadPool *threadPool;
 
-    void dfs(const string& currUrl) {
+    string get_hostname(const string& url) {
+        size_t start = url.find("://") + 3;
+        size_t end = url.find('/', start);
+        return url.substr(start, end - start);
+    }
+
+    static void dfs_wrapper(void *args) {
+        UserArgs* uargs = (UserArgs*)(args);
+        Solution* obj = uargs->obj;
+        obj->dfs(uargs->arg);
+    }
+
+    void dfs(string currUrl) {
         string hostname = get_hostname(currUrl);
         vector<string> urls = htmlParser->getUrls(currUrl);
 
-        for (string& url: urls) {
+        for (const string& url: urls) {
             if (hostname != get_hostname(url)) continue;
+            
             bool is_new = false;
             {
                 lock_guard<mutex> v_lock(m_visited);
@@ -97,8 +159,17 @@ class Solution {
                     is_new = true;
                 }
             }
-            if (is_new)
-                threadPool->enqueueJob([this, url](){ dfs(url); });
+            
+            if (is_new) {
+                UserArgs* ua = new UserArgs();
+                ua->obj = this;     // Solution 객체 주소 전달
+                ua->arg = url;
+                
+                Task* t = new Task();
+                t->taskFunction = &Solution::dfs_wrapper;
+                t->args = ua;
+                threadPool->submitTask(t);
+            }
         }
     }
 public:
@@ -107,9 +178,17 @@ public:
         this->threadPool = new ThreadPool(256);
 
         visited.insert(startUrl);
-        threadPool->enqueueJob([&]() { dfs(startUrl); });
 
-        while (threadPool->size()) ;
+        UserArgs* ua = new UserArgs();
+        ua->obj = this;
+        ua->arg = startUrl;
+        
+        Task* t = new Task();
+        t->taskFunction = &Solution::dfs_wrapper;
+        t->args = ua;
+        threadPool->submitTask(t);
+        
+        threadPool->waitAll(); 
         delete threadPool;
         
         return vector<string>(visited.begin(), visited.end());
