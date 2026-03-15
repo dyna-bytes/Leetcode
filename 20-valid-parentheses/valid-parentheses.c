@@ -10,18 +10,16 @@ bool isValid(char* s) {
         char ch = s[i];
         if ((ch == '(') || (ch == '[') || (ch == '{'))
             stk[++sp] = ch;
-        else if (ch == ')') 
-            if (sp && (stk[sp] == '('))
-                --sp;
-            else return false;
-        else if (ch == ']') 
-            if (sp && (stk[sp] == '['))
-                --sp;
-            else return false;
-        else if (ch == '}') 
-            if (sp && (stk[sp] == '{'))
-                --sp;
-            else return false;
+        else if (ch == ')') {
+            if (sp && (stk[sp--] == '(')) continue;
+            return false;
+        } else if (ch == ']') {
+            if (sp && (stk[sp--] == '[')) continue;
+            return false;
+        } else if (ch == '}') {
+            if (sp && (stk[sp--] == '{')) continue;
+            return false;
+        }
     }
 
     return sp == 0;
