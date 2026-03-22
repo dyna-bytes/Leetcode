@@ -33,8 +33,6 @@ class Solution {
             for (double x = 0; x < N; x++) {
                 auto res = matmul(rot, vector<double>{ y - k, x - k });
                 int ry = res[0] + k, rx = res[1] + k;
-                debug(ry); 
-                debug(rx);
                 ret[ry][rx] = mat[y][x];
             }
         return ret;
