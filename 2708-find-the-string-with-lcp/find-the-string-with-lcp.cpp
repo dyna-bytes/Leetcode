@@ -62,32 +62,25 @@ class Solution {
         return arr;
     }
 
-    vector<vector<int>> constructLCP(const string& candi) {
-        int n = candi.size();
-        vector<vector<int>> lcp(n, vector<int>(n, 0));
-
-        auto getLcpLen = [&](int i, int j) {
-            int sz = 0;
-            while (max(i, j) < n && candi[i] == candi[j]) {
-                i++, j++;
-                sz++;
-            }
-            return sz;
-        };
-
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j <= i; j++) {
-                lcp[i][j] = lcp[j][i] = getLcpLen(i, j);
-            }
-        }
-        return lcp;
-    }
 public:
     string findTheString(vector<vector<int>>& lcp) {
         string candi = greedyConstruct(lcp);
         if (candi.empty()) return "";
         
-        if (lcp != constructLCP(candi)) return "";
+        // dp verification
+        int n = lcp.size();
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = n - 1; j >= 0; j--) {
+                int actual_lcp = 0;
+                if (candi[i] == candi[j]) {
+                    int next_lcp = (max(i + 1, j + 1) < n) ? lcp[i + 1][j + 1] : 0;
+                    actual_lcp = next_lcp + 1;
+                }
+
+                if (actual_lcp != lcp[i][j])
+                    return "";
+            }
+        }
         return candi;
     }
 };
