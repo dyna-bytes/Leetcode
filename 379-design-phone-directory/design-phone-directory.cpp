@@ -1,5 +1,5 @@
 class PhoneDirectory {
-    set<int> st;
+    unordered_set<int> st;
 public:
     PhoneDirectory(int maxNumbers) {
         for (int i = 0; i < maxNumbers; i++)
