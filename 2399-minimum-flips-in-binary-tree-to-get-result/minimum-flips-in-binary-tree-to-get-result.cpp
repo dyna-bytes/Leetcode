@@ -17,7 +17,7 @@ class Solution {
     const int XOR = 4;
     const int NOT = 5;
 
-    map<TreeNode*, int> dp_f, dp_g;
+    unordered_map<TreeNode*, int> dp_f, dp_g;
 
     int f(TreeNode* curr) { // minimum flips to make result true
         int op = curr->val;
