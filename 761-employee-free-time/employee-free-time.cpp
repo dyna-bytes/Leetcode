@@ -32,10 +32,8 @@ public:
         int start = -1;
         int end = 0;
         for (auto& [time, opens]: events) {
-            debug(time);
-            debug(opens);
             open_cnt += opens;
-            debug(open_cnt);
+            
             if (open_cnt == 0 && start == -1) {
                 start = time;
                 end = -1;
