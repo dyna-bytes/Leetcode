@@ -14,8 +14,6 @@
  * };
  */
 class Solution {
-    typedef pair<int, int> pii;
-
     int guess(string& u, string& v) {
         int res = 0;
         for (int i = 0; i < u.size(); i++)
@@ -24,19 +22,33 @@ class Solution {
     }
 public:
     void findSecretWord(vector<string>& words, Master& master) {
-        // random_shuffle(words.begin(), words.end());
-        long long a = 12;
-        long long b = 32;
-        long long p = 10009;
-        for (int i = 0, score = 0; i < 30 && score != 6; i++) {
-            string& test = words[((a * rand() + b) % p) % words.size()];
-            score = master.guess(test);
+        for (int i = 0; i < 30; i++) {
+            random_shuffle(words.begin(), words.end());
 
-            vector<string> candidates;
-            for (string& word: words)
-                if (score == guess(test, word))
-                    candidates.push_back(word);
-            words = candidates;
+            map<int, string> penalties;
+            unordered_map<string, vector<vector<string>>> bucket_group;
+            for (string& word: words) {
+                bucket_group[word].assign(7, vector<string>());
+                vector<vector<string>>& buckets = bucket_group[word];
+
+                for (string& other: words) {
+                    if (word == other) continue;
+                    int score = guess(word, other);
+                    buckets[score].push_back(other);
+                }
+
+                ulong max_sz = 0;
+                for (vector<string>& bucket: buckets)
+                    max_sz = max(max_sz, bucket.size());
+
+                penalties[max_sz] = word;
+            }
+
+            string target = penalties.begin()->second;
+            int score = master.guess(target);
+            if (score == 6) break;
+
+            words = bucket_group[target][score];
         }
     }
 };
