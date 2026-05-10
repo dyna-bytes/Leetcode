@@ -4,21 +4,17 @@ class Solution {
 public:
     int maximumJumps(vector<int>& nums, int target) {
         int n = nums.size();
-        vector<int> visited(n, 0);
-        queue<pll> q;
-        q.push({0, 0});
+        vector<int> dp(n, -1);
 
-        while (q.size()) {
-            auto [i, jumps] = q.front(); q.pop();
-
+        dp[0] = 0;
+        for (int i = 0; i < n; i++) {
+            if (dp[i] == -1) continue;
             for (int j = i + 1; j < n; j++) {
-                if (abs(nums[i] - nums[j]) > target) continue;
-                if (visited[j] >= jumps+1) continue;
-                visited[j] = jumps+1;
-                q.push({j, jumps+1});
+                if (abs(nums[j] - nums[i]) > target) continue;
+                dp[j] = max(dp[j], dp[i] + 1);
             }
         }
-        if (visited[n-1] == 0) return -1;
-        return visited[n-1];
+
+        return dp[n-1];
     }
 };
