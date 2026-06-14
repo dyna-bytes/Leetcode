@@ -9,20 +9,39 @@
  * };
  */
 class Solution {
+    ListNode* middle(ListNode* head) {
+        ListNode* slow = head;
+        ListNode* fast = head;
+        while (fast->next && fast->next->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        return slow;
+    }
+    ListNode* reverse(ListNode* head) {
+        ListNode* prev = NULL;
+        ListNode* curr = head;
+        while (curr) {
+            ListNode* next = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
 public:
     int pairSum(ListNode* head) {
-        unordered_map<int, int> um;
+        ListNode* mid = middle(head);
+        ListNode* second = mid->next;
+        mid->next = NULL;
+        ListNode* first = reverse(head);
 
-        int i = 0;
-        for (ListNode* curr = head; curr; curr = curr->next) {
-            um[i] = curr->val;
-            i++;
-        }
-        
-        int n = i;
         int ret = 0;
-        for (int j = 0; j < n/2; j++)
-            ret = max(ret, um[j] + um[n-1-j]);
+        while (first) {
+            ret = max(ret, first->val + second->val);
+            first = first->next;
+            second = second->next;
+        }
         return ret;
     }
 };
