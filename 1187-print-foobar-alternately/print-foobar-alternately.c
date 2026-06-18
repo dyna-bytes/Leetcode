@@ -1,8 +1,9 @@
 typedef struct {
     int n;
-    int foo_turn;
+
     pthread_mutex_t m;
-    pthread_cond_t c;
+    pthread_cond_t cv;
+    _Atomic(int) turn;
 } FooBar;
 
 // Function declarations. Do not change or remove this line
@@ -12,9 +13,10 @@ void printBar();
 FooBar* fooBarCreate(int n) {
     FooBar* obj = (FooBar*) malloc(sizeof(FooBar));
     obj->n = n;
-    obj->foo_turn = true;
-    pthread_mutex_init(&obj->m, NULL);
-    pthread_cond_init(&obj->c, NULL);
+
+    pthread_mutex_init(&obj->m, 0);
+    pthread_cond_init(&obj->cv, 0);
+    obj->turn = 0;
     return obj;
 }
 
@@ -22,16 +24,12 @@ void foo(FooBar* obj) {
     
     for (int i = 0; i < obj->n; i++) {
         pthread_mutex_lock(&obj->m);
-        while (obj->foo_turn == false)
-            pthread_cond_wait(&obj->c, &obj->m);
-        pthread_mutex_unlock(&obj->m);
-
+        while (obj->turn != 0)
+            pthread_cond_wait(&obj->cv, &obj->m);
         // printFoo() outputs "foo". Do not change or remove this line.
         printFoo();
-
-        pthread_mutex_lock(&obj->m);
-        obj->foo_turn = false;
-        pthread_cond_signal(&obj->c);
+        obj->turn = 1;
+        pthread_cond_signal(&obj->cv);
         pthread_mutex_unlock(&obj->m);
     }
 }
@@ -40,21 +38,17 @@ void bar(FooBar* obj) {
     
     for (int i = 0; i < obj->n; i++) {
         pthread_mutex_lock(&obj->m);
-        while (obj->foo_turn == true)
-            pthread_cond_wait(&obj->c, &obj->m);
-        pthread_mutex_unlock(&obj->m);
-        
+        while (obj->turn != 1)
+            pthread_cond_wait(&obj->cv, &obj->m);
         // printBar() outputs "bar". Do not change or remove this line.
         printBar();
-        
-        pthread_mutex_lock(&obj->m);
-        obj->foo_turn = true;
-        pthread_cond_signal(&obj->c);
+        obj->turn = 0;
+        pthread_cond_signal(&obj->cv);
         pthread_mutex_unlock(&obj->m);
     }
 }
 
 void fooBarFree(FooBar* obj) {
     pthread_mutex_destroy(&obj->m);   
-    pthread_cond_destroy(&obj->c);   
+    pthread_cond_destroy(&obj->cv);
 }
