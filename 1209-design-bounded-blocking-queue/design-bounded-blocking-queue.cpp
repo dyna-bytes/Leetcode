@@ -1,35 +1,34 @@
 class BoundedBlockingQueue {
-    int eq = 0;
-    int dq = 0;
     sem_t sem_eq;
     sem_t sem_dq;
+    int eq;
+    int dq;
     int cap;
-    vector<int> queue;
+    vector<int> q;
 public:
     BoundedBlockingQueue(int capacity) {
+        sem_init(&sem_eq, 0, capacity);
+        sem_init(&sem_dq, 0, 0);
         this->cap = capacity + 1;
-        queue.resize(cap);
-        sem_init(&sem_eq, 0, 0);
-        sem_init(&sem_dq, 0, capacity);
+        q.assign(cap, 0);
+        eq = dq = 0;
     }
     
     void enqueue(int element) {
-        sem_wait(&sem_dq);
-        eq = (eq + 1) % cap;
-        queue[eq] = element;
-        sem_post(&sem_eq);
+        sem_wait(&sem_eq);
+        q[eq = (eq + 1) % cap] = element;
+        sem_post(&sem_dq);
     }
     
     int dequeue() {
-        sem_wait(&sem_eq);
-        dq = (dq + 1) % cap;
-        int ret = queue[dq];
-        sem_post(&sem_dq);
+        sem_wait(&sem_dq);
+        int ret = q[dq = (dq + 1) % cap];
+        sem_post(&sem_eq);
         return ret;
     }
 
     bool isFull() {
-        return (eq + 1) % cap == dq;
+        return size() == cap - 1;
     }
 
     bool isEmpty() {
