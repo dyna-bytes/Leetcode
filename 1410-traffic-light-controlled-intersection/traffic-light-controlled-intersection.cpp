@@ -1,12 +1,14 @@
-#define debug(x) cout << #x << " is " << x << endl;
-
 class TrafficLight {
     pthread_mutex_t m;
-    int pass_road;
+    int turnA;
 public:
     TrafficLight() {
-        pthread_mutex_init(&m, NULL);
-        pass_road = 1;
+        pthread_mutex_init(&m, 0);
+        turnA = true;
+    }
+
+    bool isTurnA(int roadId) {
+        return roadId == 1;
     }
 
     void carArrived(
@@ -17,12 +19,11 @@ public:
         function<void()> crossCar    // Use crossCar() to make car cross the intersection
     ) {
         pthread_mutex_lock(&m);
-        if (pass_road != roadId) {
+        if (isTurnA(roadId) != turnA) {
+            turnA = !turnA;
             turnGreen();
-            pass_road = roadId;
         }
         crossCar();
-
         pthread_mutex_unlock(&m);
     }
 };
