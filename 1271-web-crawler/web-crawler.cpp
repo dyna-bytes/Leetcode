@@ -10,37 +10,28 @@
 
 class Solution {
     unordered_set<string> visited;
-
     string get_hostname(const string& url) {
-        size_t start = url.find("://");
-        if (start == string::npos) return "";
-        start += 3;
-        size_t end = url.find('/', start);
-        if (end == string::npos) return url.substr(start);
-        return url.substr(start, end - start);
+        size_t s = url.find("://");
+        s += 3;
+
+        size_t e = url.find('/', s);
+        if (e == string::npos) return url.substr(s);
+        return url.substr(s, e - s);
+    }
+    void dfs(string& currUrl, HtmlParser& htmlParser) {
+        string hostname = get_hostname(currUrl);
+        vector<string> urls = htmlParser.getUrls(currUrl);
+        for (string& url: urls) {
+            if (hostname != get_hostname(url)) continue;
+            if (visited.count(url)) continue;
+            visited.insert(url);
+            dfs(url, htmlParser);
+        }
     }
 public:
     vector<string> crawl(string startUrl, HtmlParser htmlParser) {
-        queue<string> q;
-
-        q.push(startUrl);
         visited.insert(startUrl);
-
-        while (q.size()) {
-            string currUrl = q.front(); q.pop();
-
-            string hostname = get_hostname(currUrl);
-            vector<string> urls = htmlParser.getUrls(currUrl);
-
-            for (string& url: urls) {
-                if (hostname != get_hostname(url)) continue;
-                if (visited.count(url)) continue;
-
-                visited.insert(url);
-                q.push(url);
-            }
-        }
-        
+        dfs(startUrl, htmlParser);
         return vector<string>(visited.begin(), visited.end());
     }
 };
