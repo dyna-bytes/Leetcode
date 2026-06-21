@@ -6,57 +6,55 @@
  *     vector<string> getUrls(string url);
  * };
  */
+
+#define debug(x) cout << #x << " is " << x << endl;
 class Solution;
 struct UserArgs {
-    Solution *obj;
+    Solution* obj;
     string arg;
 };
-
 struct Task {
-    void (*taskFunction)(void *);
-    void *args;
+    void (*taskFunc)(void*);
+    void* args;
 };
-
 class ThreadPool {
     vector<pthread_t> threads;
     queue<Task*> taskQueue;
     pthread_mutex_t mutexQueue;
     pthread_cond_t condQueue;
     pthread_cond_t condDone;
+    bool shutdown = false;
+    int n_threads;
 
-    bool shutdown;
-
-    void worker(void) {
+    static void* worker(void *args) {
+        ThreadPool* obj = (ThreadPool*)(args);
         while (true) {
-            pthread_mutex_lock(&mutexQueue);
-            while (taskQueue.empty() && !shutdown)
-                pthread_cond_wait(&condQueue, &mutexQueue);
-
-            if (shutdown && taskQueue.empty()) {
-                pthread_mutex_unlock(&mutexQueue);
-                return;
+            pthread_mutex_lock(&obj->mutexQueue);
+            while (obj->taskQueue.empty() && !obj->shutdown) 
+                pthread_cond_wait(&obj->condQueue, &obj->mutexQueue);
+            
+            if (obj->shutdown && obj->taskQueue.empty()) {
+                pthread_mutex_unlock(&obj->mutexQueue);
+                break;
             }
 
-            Task* task = taskQueue.front(); 
-            taskQueue.pop();
-            pthread_mutex_unlock(&mutexQueue);
+            Task* task = obj->taskQueue.front();
+            obj->taskQueue.pop();
+            pthread_mutex_unlock(&obj->mutexQueue);
 
-            task->taskFunction(task->args);
+            task->taskFunc(task->args);
+            // delete (UserArgs*)(task->args); 
+            // delete task;
 
-            pthread_mutex_lock(&mutexQueue);
-            if (taskQueue.empty())
-                pthread_cond_signal(&condDone);
-            pthread_mutex_unlock(&mutexQueue);
+            pthread_mutex_lock(&obj->mutexQueue);
+            if (obj->taskQueue.empty()) 
+                pthread_cond_signal(&obj->condDone);
+            pthread_mutex_unlock(&obj->mutexQueue);
         }
-        return;
-    }
-    static void* worker_thread(void* args) {
-        ThreadPool *pool = (ThreadPool*)(args);
-        pool->worker();
         return NULL;
     }
 public:
-    void submitTask(Task *task) {
+    void submitTask(Task* task) {
         pthread_mutex_lock(&mutexQueue);
         taskQueue.push(task);
         pthread_mutex_unlock(&mutexQueue);
@@ -68,15 +66,15 @@ public:
             pthread_cond_wait(&condDone, &mutexQueue);
         pthread_mutex_unlock(&mutexQueue);
     }
-    ThreadPool(size_t numThreads): shutdown(false) {
+    ThreadPool(int n_threads) {
+        this->n_threads = n_threads;
         pthread_mutex_init(&mutexQueue, NULL);
         pthread_cond_init(&condQueue, NULL);
         pthread_cond_init(&condDone, NULL);
 
-        threads.assign(numThreads, 0);
-        for (size_t i = 0; i < numThreads; ++i) 
-            pthread_create(&threads[i], NULL, 
-                &ThreadPool::worker_thread, this);
+        threads.assign(n_threads, 0);
+        for (int i = 0; i < n_threads; ++i)
+            pthread_create(&threads[i], 0, &worker, this);
     }
     ~ThreadPool() {
         pthread_mutex_lock(&mutexQueue);
@@ -84,14 +82,14 @@ public:
         pthread_mutex_unlock(&mutexQueue);
 
         pthread_cond_broadcast(&condQueue);
-        for (pthread_t& th: threads) 
-            pthread_join(th, NULL);
-        
+        for (int i = 0; i < n_threads; ++i)
+            pthread_join(threads[i], NULL);
         pthread_mutex_destroy(&mutexQueue);
         pthread_cond_destroy(&condQueue);
         pthread_cond_destroy(&condDone);
     }
 };
+
 class Solution {
     unordered_set<string> visited;
     mutex mutexVisited;
@@ -99,58 +97,47 @@ class Solution {
     HtmlParser *htmlParser;
     ThreadPool *threadPool;
 
-    string get_hostname(const string& url) {
+    static string get_hostname(const string& url) {
         size_t start = url.find("://") + 3;
         size_t end = url.find('/', start);
         return url.substr(start, end - start);
     }
-
-    void dfs(const string& currUrl) {
+    static void dfs(void *args) {
+        UserArgs* uargs = (UserArgs*)(args);
+        Solution* obj = uargs->obj;
+        string currUrl = uargs->arg;
         string hostname = get_hostname(currUrl);
-        vector<string> urls = htmlParser->getUrls(currUrl);
+        debug(currUrl);
 
-        for (const string& url: urls) {
+        for (const string& url: obj->htmlParser->getUrls(currUrl)) {
             if (hostname != get_hostname(url)) continue;
-
-            mutexVisited.lock();
-            if (visited.count(url)) {
-                mutexVisited.unlock();
+            obj->mutexVisited.lock();
+            if (obj->visited.count(url)) {
+                obj->mutexVisited.unlock();
                 continue;
             }
+            obj->visited.insert(url);
+            obj->mutexVisited.unlock();
 
-            visited.insert(url);
-            mutexVisited.unlock();
-
-            UserArgs *uargs = new UserArgs();
-            uargs->obj = this;
-            uargs->arg = url;
-
+            UserArgs* n_uargs = new UserArgs();
+            n_uargs->obj = obj;
+            n_uargs->arg = url;
             Task* task = new Task();
-            task->taskFunction = &Solution::dfs_wrapper;
-            task->args = uargs;
-            threadPool->submitTask(task);
-        }
+            task->taskFunc = &Solution::dfs;
+            task->args = n_uargs;
+            obj->threadPool->submitTask(task);
+        } 
     }
-
-    static void dfs_wrapper(void *args) {
-        UserArgs *uargs = (UserArgs*)(args);
-        Solution *obj = uargs->obj;
-        obj->dfs(uargs->arg);
-    }
-
 public:
     vector<string> crawl(string startUrl, HtmlParser htmlParser) {
         this->htmlParser = &htmlParser;
         this->threadPool = new ThreadPool(256);
-
         visited.insert(startUrl);
-
-        UserArgs *uargs = new UserArgs();
+        UserArgs* uargs = new UserArgs();
         uargs->obj = this;
         uargs->arg = startUrl;
-
         Task* task = new Task();
-        task->taskFunction = &Solution::dfs_wrapper;
+        task->taskFunc = &Solution::dfs;
         task->args = uargs;
         threadPool->submitTask(task);
 
