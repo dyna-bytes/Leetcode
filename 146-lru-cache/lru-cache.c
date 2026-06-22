@@ -5,20 +5,18 @@ typedef struct {
     int val;
 } Page;
 
-typedef struct node {
+typedef struct Node_t {
     Page page;
-    struct node* prev;
-    struct node* next;
+    struct Node_t* prev;
+    struct Node_t* next;
 } Node;
 
 typedef struct {
     Node** lut; // { key: node* }
-
     int cap;
-
-    Node* head;
+    Node* head;    
     Node* tail;
-    int list_size;
+    int list_size;    
 } LRUCache;
 
 void removeNode(Node* node) {
@@ -39,10 +37,9 @@ void insertTail(Node* node, Node* tail) {
 
 LRUCache* lRUCacheCreate(int capacity) {
     LRUCache* obj = malloc(sizeof(*obj));
-    
+
     Node** lut = (Node**)calloc(MAXKEY, sizeof(Node*));
     obj->lut = lut;
-
     obj->cap = capacity;
 
     Node* head = malloc(sizeof(*head));
@@ -50,7 +47,7 @@ LRUCache* lRUCacheCreate(int capacity) {
 
     Node* tail = malloc(sizeof(*tail));
     obj->tail = tail;
-
+    
     head->prev = tail->next = NULL;
     head->next = tail;
     tail->prev = head;
@@ -61,8 +58,7 @@ LRUCache* lRUCacheCreate(int capacity) {
 
 int lRUCacheGet(LRUCache* obj, int key) {
     Node** lut = obj->lut;
-    if (lut[key] == NULL)
-        return -1;
+    if (lut[key] == NULL) return -1;
 
     Node* node = lut[key];
     removeNode(node);
@@ -104,7 +100,6 @@ void lRUCachePut(LRUCache* obj, int key, int value) {
     page->val = value;
 
     lut[key] = node;
-
     insertTail(node, obj->tail);
 }
 
@@ -115,13 +110,13 @@ void lRUCacheFree(LRUCache* obj) {
     Node* head = obj->head;
     Node* tail = obj->tail;
     if (head && tail && obj->list_size) {
-        for (Node* curr = head->next, *next; curr && curr != tail; curr = next) {
+        for (Node* curr = head->next, *next; curr && (curr != tail); curr = next) {
             next = curr->next;
             free(curr);
         }
 
-        free(obj->head);
-        free(obj->tail);
+        free(head);
+        free(tail);
     }
 }
 
