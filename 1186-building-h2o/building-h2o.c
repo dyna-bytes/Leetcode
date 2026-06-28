@@ -1,11 +1,10 @@
 #define debug(x) \
     printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x)
-
+    
 typedef struct {
     // User defined data may be declared here.
-    pthread_mutex_t m;
-    pthread_cond_t cv_hy;
-    pthread_cond_t cv_ox;
+    sem_t sem_hy;
+    sem_t sem_ox;
     _Atomic(int) h;
 } H2O;
 
@@ -17,35 +16,30 @@ H2O* h2oCreate() {
     H2O* obj = (H2O*) malloc(sizeof(H2O));
     
     // Initialize user defined data here.
-    pthread_mutex_init(&obj->m, NULL);
-    pthread_cond_init(&obj->cv_hy, NULL);
-    pthread_cond_init(&obj->cv_ox, NULL);
+    sem_init(&obj->sem_hy, 0, 2);
+    sem_init(&obj->sem_ox, 0, 0);
     obj->h = 0;
     return obj;
 }
 
 void hydrogen(H2O* obj) {
-    pthread_mutex_lock(&obj->m);
-    while (obj->h == 2)
-        pthread_cond_wait(&obj->cv_hy, &obj->m);
+    sem_wait(&obj->sem_hy);
 
     if (++obj->h == 2)
-        pthread_cond_signal(&obj->cv_ox);
+        sem_post(&obj->sem_ox);
     // releaseHydrogen() outputs "H". Do not change or remove this line.
     releaseHydrogen();
-    pthread_mutex_unlock(&obj->m);
 }
 
 void oxygen(H2O* obj) {
-    pthread_mutex_lock(&obj->m);
-    while (obj->h < 2)
-        pthread_cond_wait(&obj->cv_ox, &obj->m);
-
+    sem_wait(&obj->sem_ox);
     obj->h = 0;
-    pthread_cond_broadcast(&obj->cv_hy);
+
     // releaseOxygen() outputs "O". Do not change or remove this line.
     releaseOxygen();
-    pthread_mutex_unlock(&obj->m);
+
+    sem_post(&obj->sem_hy);
+    sem_post(&obj->sem_hy);
 }
 
 void h2oFree(H2O* obj) {
