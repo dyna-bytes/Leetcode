@@ -2,16 +2,32 @@
 #define debug(x) printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x);
 
 typedef struct {
-    int index;
-    int size;
-    int mID;
+	int index;
+	int size;
+	int mID;
 } Page;
 
 typedef struct node_t {
-    Page page;
-    struct node_t* prev;
-    struct node_t* next;
+	struct node_t* prev;
+	struct node_t* next;
+	Page page;
 } Node;
+
+void removeNode(Node* node) {
+	Node* prev = node->prev;
+	Node* next = node->next;
+
+	if (prev) prev->next = next;
+	if (next) next->prev = prev;
+}
+
+void insertNode(Node* node, Node* prev) {
+	node->next = prev->next;
+	if (prev->next) prev->next->prev = node;
+
+	prev->next = node;
+	node->prev = prev;
+}
 
 typedef struct {
     Node* head;
@@ -23,64 +39,54 @@ Allocator* allocatorCreate(int n) {
     Node* head = calloc(1, sizeof(*head));
     head->page.index = 0;
     head->page.size = n;
-    head->page.mID = -1;
+    head->page.mID = 0;
     obj->head = head;
     return obj;
 }
 
 int allocatorAllocate(Allocator* obj, int size, int mID) {
-    Node* head = obj->head;
-    for (Node* curr = head; curr; curr = curr->next) {
-        if (curr->page.mID != -1) continue;
-        if (curr->page.size < size) continue;
-        curr->page.mID = mID;
-        Node* next = calloc(1, sizeof(*next));
-
-        next->page.index = curr->page.index + size;
-        next->page.size = curr->page.size - size;
-        next->page.mID = -1;
-
-        next->prev = curr;
-        next->next = curr->next;
-        if (curr->next)
-            curr->next->prev = next;
-
-        curr->next = next;
-        curr->page.size = size;
-        return curr->page.index;
-    }
-    return -1;
+	for (Node* curr = obj->head; curr; curr = curr->next) {
+		if (curr->page.mID == 0 && curr->page.size >= size) { // empty & avail
+			curr->page.mID = mID; // allocation
+			if (curr->page.size == size) 
+				return curr->page.index;
+			
+			Node* node = calloc(1, sizeof(*node));
+			node->page.index = curr->page.index + size;
+			node->page.size = curr->page.size - size;
+			node->page.mID = 0;
+			insertNode(node, curr); // separation
+            curr->page.size = size;
+			return curr->page.index;
+		}
+	}
+	return -1;
 }
 
 int allocatorFreeMemory(Allocator* obj, int mID) {
-    int sz = 0;
-    Node* head = obj->head;
-    for (Node* curr = head; curr; curr = curr->next) {
-        if (curr->page.mID == mID) {
-            sz += curr->page.size;
-            curr->page.mID = -1;
-            Node* prev = curr->prev;
-            Node* next = curr->next;
+	int sz = 0;
+	for (Node* curr = obj->head; curr; curr = curr->next) {
+		if (curr->page.mID != mID) continue;
 
-            if (prev && prev->page.mID == -1) {
-                prev->page.size += curr->page.size;
-                prev->next = next;
-                if (next)
-                    next->prev = prev;
-                free(curr);
-                curr = prev;
-            }
+		curr->page.mID = 0;
+		sz += curr->page.size;
 
-            if (next && next->page.mID == -1) {
-                curr->page.size += next->page.size;
-                curr->next = next->next;
-                if (next->next)
-                    next->next->prev = curr;
-                free(next);
-            }
-        }
-    }
-    return sz;
+		Node* prev = curr->prev;
+		if (prev && prev->page.mID == 0) {
+			prev->page.size += curr->page.size;
+			removeNode(curr);
+			free(curr);
+			curr = prev;
+		}
+
+		Node* next = curr->next;
+		if (next && next->page.mID == 0) {
+			curr->page.size += next->page.size;
+			removeNode(next);
+			free(next);
+		}
+	}
+	return sz;
 }
 
 void allocatorFree(Allocator* obj) {
