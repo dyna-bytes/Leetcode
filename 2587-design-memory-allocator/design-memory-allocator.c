@@ -11,31 +11,13 @@ typedef struct {
 typedef struct node_t {
     struct node_t* prev;
     struct node_t* next;
-    struct node_t* list_prev;
-    struct node_t* list_next;
     Page page;
 } Node;
 
 typedef struct {
     Node* head;
-    Node* free_lists[MAXN]; // { size: node list }
-    Node* alloc_lists[MAXN]; // { mID: node list }
 } Allocator;
 
-void insertToList(Node** head, Node* node) {
-    node->list_next = (*head);
-    node->list_prev = NULL;
-    if (*head) (*head)->list_prev = node;
-    (*head) = node;
-}
-
-void removeFromList(Node** head, Node* node) {
-    if (node->list_prev) node->list_prev->list_next = node->list_next;
-    else (*head) = node->list_next;
-
-    if (node->list_next) node->list_next->list_prev = node->list_prev;
-    node->list_prev = node->list_next = NULL;
-}
 
 Allocator* allocatorCreate(int n) {
     Allocator* obj = calloc(1, sizeof(*obj));
@@ -43,68 +25,57 @@ Allocator* allocatorCreate(int n) {
     head->page.index = 0;
     head->page.size = n;
     head->page.mID = 0;
-    insertToList(&obj->free_lists[n], head);
     obj->head = head;
     return obj;
 }
 
 int allocatorAllocate(Allocator* obj, int size, int mID) {
-    Node* best = NULL;
-    for (int sz = size; sz < MAXN; ++sz) {
-        for (Node* curr = obj->free_lists[sz]; curr; curr = curr->list_next) 
-            if (!best || best->page.index > curr->page.index)
-                best = curr;
+    for (Node* curr = obj->head; curr; curr = curr->next) {
+        if (curr->page.mID) continue;
+        if (curr->page.size < size) continue;
+
+        curr->page.mID = mID;
+        if (curr->page.size > size) {
+            Node* next = calloc(1, sizeof(*next));
+            next->page.index = curr->page.index + size;
+            next->page.size = curr->page.size - size;
+            next->page.mID = 0;
+
+            if (curr->next) curr->next->prev = next;
+            next->next = curr->next;
+            curr->next = next;
+            next->prev = curr;
+        }
+        curr->page.size = size;
+        return curr->page.index;
     }
-
-    if (!best) return -1;
-    removeFromList(&obj->free_lists[best->page.size], best);
-
-    if (best->page.size > size) {
-        Node* split = calloc(1, sizeof(*split));
-        split->page.index = best->page.index + size;
-        split->page.size = best->page.size - size;
-        split->page.mID = 0;
-
-        split->next = best->next;
-        split->prev = best;
-        if (best->next) best->next->prev = split;
-        best->next = split;
-        insertToList(&obj->free_lists[split->page.size], split);
-    }
-
-    best->page.size = size;
-    best->page.mID = mID;
-    insertToList(&obj->alloc_lists[mID], best);
-    return best->page.index;
+    return -1;
 }
 
 int allocatorFreeMemory(Allocator* obj, int mID) {
     int sz = 0;
-    for (Node* curr = obj->alloc_lists[mID], *list_next; curr; curr = list_next) {
-        list_next = curr->list_next;
-        removeFromList(&obj->alloc_lists[mID], curr);
+    for (Node* curr = obj->head; curr; curr = curr->next) {
+        if (curr->page.mID != mID) continue;
+
         curr->page.mID = 0;
         sz += curr->page.size;
 
         Node* prev = curr->prev;
         if (prev && prev->page.mID == 0) {
-            removeFromList(&obj->free_lists[prev->page.size], prev);
             prev->page.size += curr->page.size;
-            prev->next = curr->next;
             if (curr->next) curr->next->prev = prev;
+            prev->next = curr->next;
             free(curr);
             curr = prev;
         }
 
         Node* next = curr->next;
         if (next && next->page.mID == 0) {
-            removeFromList(&obj->free_lists[next->page.size], next);
             curr->page.size += next->page.size;
-            curr->next = next->next;
             if (next->next) next->next->prev = curr;
+            curr->next = next->next;
             free(next);
         }
-        insertToList(&obj->free_lists[curr->page.size], curr);
     }
     return sz;
 }
