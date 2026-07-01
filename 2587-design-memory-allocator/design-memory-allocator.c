@@ -1,38 +1,37 @@
 
 #define debug(x) printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x);
 #define MAXN 1001
+
 typedef struct {
-	int index;
-	int size;
-	int mID;
+    int index;
+    int size;
+    int mID;
 } Page;
 
 typedef struct node_t {
-	struct node_t* prev;
-	struct node_t* next;
-
+    struct node_t* prev;
+    struct node_t* next;
     struct node_t* list_prev;
     struct node_t* list_next;
-
-	Page page;
+    Page page;
 } Node;
 
 typedef struct {
     Node* head;
-    Node* free_bins[MAXN];
-    Node* mID_map[MAXN];
+    Node* free_lists[MAXN]; // { size: node list }
+    Node* alloc_lists[MAXN]; // { mID: node list }
 } Allocator;
 
 void insertToList(Node** head, Node* node) {
-    node->list_next = *head;
+    node->list_next = (*head);
     node->list_prev = NULL;
     if (*head) (*head)->list_prev = node;
-    *head = node;
+    (*head) = node;
 }
 
 void removeFromList(Node** head, Node* node) {
     if (node->list_prev) node->list_prev->list_next = node->list_next;
-    else *head = node->list_next;
+    else (*head) = node->list_next;
 
     if (node->list_next) node->list_next->list_prev = node->list_prev;
     node->list_prev = node->list_next = NULL;
@@ -40,70 +39,56 @@ void removeFromList(Node** head, Node* node) {
 
 Allocator* allocatorCreate(int n) {
     Allocator* obj = calloc(1, sizeof(*obj));
-    Node* head = calloc(1, sizeof(Node));
+    Node* head = calloc(1, sizeof(*head));
     head->page.index = 0;
     head->page.size = n;
     head->page.mID = 0;
-
+    insertToList(&obj->free_lists[n], head);
     obj->head = head;
-    insertToList(&obj->free_bins[n], head);
     return obj;
 }
 
 int allocatorAllocate(Allocator* obj, int size, int mID) {
-    Node* best_node = NULL;
-    for (int s = size; s < MAXN; s++) {
-        for (Node* curr = obj->free_bins[s]; curr; curr = curr->list_next) {
-            if (!best_node || curr->page.index < best_node->page.index)
-                best_node = curr;
-        }
+    Node* best = NULL;
+    for (int sz = size; sz < MAXN; ++sz) {
+        for (Node* curr = obj->free_lists[sz]; curr; curr = curr->list_next) 
+            if (!best || best->page.index > curr->page.index)
+                best = curr;
     }
 
-    if (!best_node)	return -1;
+    if (!best) return -1;
+    removeFromList(&obj->free_lists[best->page.size], best);
 
-    removeFromList(&obj->free_bins[best_node->page.size], best_node);
-
-    if (best_node->page.size > size) {
-        Node* split = calloc(1, sizeof(Node));
-        split->page.index = best_node->page.index + size;
-        split->page.size = best_node->page.size - size;
+    if (best->page.size > size) {
+        Node* split = calloc(1, sizeof(*split));
+        split->page.index = best->page.index + size;
+        split->page.size = best->page.size - size;
         split->page.mID = 0;
 
-        split->next = best_node->next;
-        split->prev = best_node;
-        if (best_node->next) best_node->next->prev = split;
-        best_node->next = split;
-
-        insertToList(&obj->free_bins[split->page.size], split);
-        best_node->page.size = size;
+        split->next = best->next;
+        split->prev = best;
+        if (best->next) best->next->prev = split;
+        best->next = split;
+        insertToList(&obj->free_lists[split->page.size], split);
     }
 
-    best_node->page.mID = mID;
-    insertToList(&obj->mID_map[mID], best_node);
-    return best_node->page.index;
+    best->page.size = size;
+    best->page.mID = mID;
+    insertToList(&obj->alloc_lists[mID], best);
+    return best->page.index;
 }
 
 int allocatorFreeMemory(Allocator* obj, int mID) {
-	int sz = 0;
-    for (Node* curr = obj->mID_map[mID], *next_target; curr; curr = next_target) {
-        next_target = curr->list_next;
-
-        removeFromList(&obj->mID_map[mID], curr);
+    int sz = 0;
+    for (Node* curr = obj->alloc_lists[mID], *list_next; curr; curr = list_next) {
+        list_next = curr->list_next;
+        removeFromList(&obj->alloc_lists[mID], curr);
         curr->page.mID = 0;
         sz += curr->page.size;
 
-        Node* next = curr->next;
-        if (next && next->page.mID == 0) {
-            removeFromList(&obj->free_bins[next->page.size], next);
-            curr->page.size += next->page.size;
-            curr->next = next->next;
-            if (next->next) next->next->prev = curr;
-            free(next);
-        }
-
         Node* prev = curr->prev;
         if (prev && prev->page.mID == 0) {
-            removeFromList(&obj->free_bins[prev->page.size], prev);
+            removeFromList(&obj->free_lists[prev->page.size], prev);
             prev->page.size += curr->page.size;
             prev->next = curr->next;
             if (curr->next) curr->next->prev = prev;
@@ -111,9 +96,17 @@ int allocatorFreeMemory(Allocator* obj, int mID) {
             curr = prev;
         }
 
-        insertToList(&obj->free_bins[curr->page.size], curr);
+        Node* next = curr->next;
+        if (next && next->page.mID == 0) {
+            removeFromList(&obj->free_lists[next->page.size], next);
+            curr->page.size += next->page.size;
+            curr->next = next->next;
+            if (next->next) next->next->prev = curr;
+            free(next);
+        }
+        insertToList(&obj->free_lists[curr->page.size], curr);
     }
-	return sz;
+    return sz;
 }
 
 void allocatorFree(Allocator* obj) {
