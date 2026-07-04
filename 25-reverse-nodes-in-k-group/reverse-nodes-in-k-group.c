@@ -5,29 +5,27 @@
  *     struct ListNode *next;
  * };
  */
-
-#define debug(x) printf("%s is %d\n", #x, x);
-typedef struct ListNode list;
-list* reverse(list* head, int k) {
-    list* prev = NULL;
-    for (list* curr = head, *next; k--; curr = next) {
+struct ListNode* reverse(struct ListNode* head, int k) {
+    struct ListNode* prev = NULL;
+    for (struct ListNode* curr = head, *next; k; k--, curr = next) {
         next = curr->next;
         curr->next = prev;
         prev = curr;
     }
+
     return prev;
 }
-struct ListNode* reverseKGroup(struct ListNode* head, int k) {
-    list* curr;
-    int cnt;
-    for (curr = head; cnt < k && curr; curr = curr->next)
-        cnt++;
 
+struct ListNode* reverseKGroup(struct ListNode* head, int k) {
+    int cnt = 0;
+    struct ListNode* ret = NULL, *curr;
+    for (curr = head; cnt < k && curr; curr = curr->next) 
+        cnt++;
+    
     if (cnt == k) {
-        list* rev_head = reverse(head, k);
+        struct ListNode* rev_head = reverse(head, k);
         head->next = reverseKGroup(curr, k);
         return rev_head;
     }
-
     return head;
 }
