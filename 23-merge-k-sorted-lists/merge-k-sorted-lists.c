@@ -70,7 +70,7 @@ bool empty(Heap* obj) {
 }
 
 int top(Heap* obj) {
-    if (empty(obj)) return -1;
+    if (empty(obj)) return INT_MIN;
     return obj->arr[ROOT];
 }
 
@@ -85,23 +85,34 @@ void pop(Heap* obj) {
 }
 
 struct ListNode* mergeKLists(struct ListNode** lists, int listsSize) {
+    if (listsSize == 0) return NULL;
+    if (listsSize == 1) return lists[0];
+
     Heap* heap = createHeap();
-    for (int i = 0; i < listsSize; ++i) {
-        for (struct ListNode* curr = lists[i]; curr; curr = curr->next)
-            push(heap, curr->val);
-    }
+    struct ListNode ret; 
+    struct ListNode* curr = &ret;
 
-    struct ListNode* ret = NULL;
-    struct ListNode* curr, *prev = NULL;
-    while (!empty(heap)) {
-        curr = calloc(1, sizeof(*curr));
-        curr->val = top(heap);
+    bool pushed;
+    do {
+        pushed = false;
+        for (int i = 0; i < listsSize; ++i) {
+            struct ListNode* head = lists[i];
+            if (head == NULL) continue;
+            push(heap, head->val);
+            lists[i] = head->next;
+            pushed = true;
+        }
+
+        int val = top(heap);
         pop(heap);
+        if (val == INT_MIN) continue;
 
-        if (!ret) ret = curr;
-        else prev->next = curr;
-        prev = curr;
-    }
+        struct ListNode* node = calloc(1, sizeof(*node));
+        node->val = val;
+        curr->next = node;
+        curr = node;
+    } while (pushed || !empty(heap));
+
     free(heap);
-    return ret;
+    return ret.next;
 }
