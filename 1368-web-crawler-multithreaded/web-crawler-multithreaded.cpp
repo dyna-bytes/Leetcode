@@ -34,7 +34,7 @@ class ThreadPool {
             while (threadPool->taskQueue.empty() && !threadPool->sigkill)
                 pthread_cond_wait(&threadPool->condQueue, &threadPool->mutexQueue);
 
-            if (threadPool->activeTasks == 0 && threadPool->sigkill) {
+            if (threadPool->sigkill) {
                 pthread_mutex_unlock(&threadPool->mutexQueue);
                 return NULL;
             }
@@ -47,8 +47,7 @@ class ThreadPool {
             task->func(task->userArgs);
 
             pthread_mutex_lock(&threadPool->mutexQueue);
-            threadPool->activeTasks--;
-            if (threadPool->taskQueue.empty()) 
+            if (--threadPool->activeTasks == 0) 
                 pthread_cond_signal(&threadPool->condDone);
             pthread_mutex_unlock(&threadPool->mutexQueue);
         }
