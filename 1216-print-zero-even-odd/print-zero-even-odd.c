@@ -1,62 +1,101 @@
+
+#define debug(x) printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x);
 typedef struct {
     int n;
     int x;
-    sem_t sem_z;
-    sem_t sem_e;
-    sem_t sem_o;
+    int turn_zero;
+    pthread_mutex_t m;
+    pthread_cond_t cv[3];
+
+    enum {
+        ZERO = 0,
+        ODD = 1,
+        EVEN = 2,
+    };
 } ZeroEvenOdd;
-void printNumber(int x);
 
 ZeroEvenOdd* zeroEvenOddCreate(int n) {
     ZeroEvenOdd* obj = (ZeroEvenOdd*) malloc(sizeof(ZeroEvenOdd));
     obj->n = n;
     obj->x = 0;
-    sem_init(&obj->sem_z, 0, 1);
-    sem_init(&obj->sem_e, 0, 0);
-    sem_init(&obj->sem_o, 0, 0);
+    obj->turn_zero = true;
+    pthread_mutex_init(&obj->m, 0);
+    for (int i = 0; i < 3; ++i)
+        pthread_cond_init(&obj->cv[i], 0);
     return obj;
 }
 
 // You may call global function `void printNumber(int x)`
 // to output "x", where x is an integer.
-
+void printNumber(int x);
 void zero(ZeroEvenOdd* obj) {
-    while (obj->x < obj->n) {
-        sem_wait(&obj->sem_z);
+    while (true) {
+        pthread_mutex_lock(&obj->m);
+        while (!obj->turn_zero)
+            pthread_cond_wait(&obj->cv[ZERO], &obj->m);
+
         if (obj->x >= obj->n) {
-            sem_post(&obj->sem_e);
-            sem_post(&obj->sem_o);
+            ++obj->x;
+            pthread_cond_signal(&obj->cv[ODD]);
+            pthread_cond_signal(&obj->cv[EVEN]);
+            pthread_mutex_unlock(&obj->m);
             return;
         }
+
         printNumber(0);
-        if (obj->x % 2) sem_post(&obj->sem_e);
-        else sem_post(&obj->sem_o);
+        debug(obj->x);
+        obj->turn_zero = false;
+        ++obj->x;
+
+        if (obj->x % 2)
+            pthread_cond_signal(&obj->cv[ODD]);
+        else
+            pthread_cond_signal(&obj->cv[EVEN]);
+        pthread_mutex_unlock(&obj->m);
     }
 }
 
 void even(ZeroEvenOdd* obj) {
-    while (obj->x < obj->n) {
-        sem_wait(&obj->sem_e);
-        if (obj->x >= obj->n) {
-            sem_post(&obj->sem_z);
-            sem_post(&obj->sem_o);
+    while (true) {
+        pthread_mutex_lock(&obj->m);
+        while ((obj->turn_zero || obj->x % 2) && obj->x <= obj->n)
+            pthread_cond_wait(&obj->cv[EVEN], &obj->m);
+
+        if (obj->x > obj->n) {
+            obj->turn_zero = true;
+            pthread_cond_signal(&obj->cv[ZERO]);
+            pthread_cond_signal(&obj->cv[ODD]);
+            pthread_mutex_unlock(&obj->m);
             return;
         }
-        printNumber(++obj->x);
-        sem_post(&obj->sem_z);
+
+        printNumber(obj->x);
+        debug(obj->x);
+        obj->turn_zero = true;
+        pthread_mutex_unlock(&obj->m);
+        pthread_cond_signal(&obj->cv[ZERO]);
     }
 }
 
 void odd(ZeroEvenOdd* obj) {
-    while (obj->x < obj->n) {
-        sem_wait(&obj->sem_o);
-        if (obj->x >= obj->n) {
-            sem_post(&obj->sem_z);
-            sem_post(&obj->sem_e);
+    while (true) {
+        pthread_mutex_lock(&obj->m);
+        while ((obj->turn_zero || (obj->x % 2 == 0)) && obj->x <= obj->n)
+            pthread_cond_wait(&obj->cv[ODD], &obj->m);
+
+        if (obj->x > obj->n) {
+            obj->turn_zero = true;
+            pthread_cond_signal(&obj->cv[ZERO]);
+            pthread_cond_signal(&obj->cv[EVEN]);
+            pthread_mutex_unlock(&obj->m);
             return;
         }
-        printNumber(++obj->x);
-        sem_post(&obj->sem_z);
+
+        printNumber(obj->x);
+        debug(obj->x);
+        obj->turn_zero = true;
+        pthread_mutex_unlock(&obj->m);
+        pthread_cond_signal(&obj->cv[ZERO]);
     }
 }
 
