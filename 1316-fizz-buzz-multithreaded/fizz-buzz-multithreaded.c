@@ -24,13 +24,14 @@ void printFizzBuzz();
 void fizz(FizzBuzz* obj) {
     while (obj->x <= obj->n) {
         pthread_mutex_lock(&obj->m);
-        while (((obj->x % 3 != 0) || (obj->x % 5 == 0)) && (obj->x <= obj->n))
+        while (((obj->x % 3) || (obj->x % 5 == 0)) && (obj->x <= obj->n))
             pthread_cond_wait(&obj->cv, &obj->m);
-        pthread_mutex_unlock(&obj->m);
-        if (obj->x > obj->n) return;
 
+        if (obj->x > obj->n) goto ret;
         printFizz();
-        obj->x++;
+        ++obj->x;
+ret:
+        pthread_mutex_unlock(&obj->m);
         pthread_cond_broadcast(&obj->cv);
     }
 }
@@ -39,13 +40,14 @@ void fizz(FizzBuzz* obj) {
 void buzz(FizzBuzz* obj) {
     while (obj->x <= obj->n) {
         pthread_mutex_lock(&obj->m);
-        while (((obj->x % 3 == 0) || (obj->x % 5 != 0)) && (obj->x <= obj->n))
+        while (((obj->x % 3 == 0) || (obj->x % 5)) && (obj->x <= obj->n))
             pthread_cond_wait(&obj->cv, &obj->m);
-        pthread_mutex_unlock(&obj->m);
-        if (obj->x > obj->n) return;
-
+        
+        if (obj->x > obj->n) goto ret;
         printBuzz();
-        obj->x++;
+        ++obj->x;
+ret:
+        pthread_mutex_unlock(&obj->m);
         pthread_cond_broadcast(&obj->cv);
     }
 }
@@ -54,13 +56,14 @@ void buzz(FizzBuzz* obj) {
 void fizzbuzz(FizzBuzz* obj) {
     while (obj->x <= obj->n) {
         pthread_mutex_lock(&obj->m);
-        while (((obj->x % 3 != 0) || (obj->x % 5 != 0)) && (obj->x <= obj->n))
+        while (((obj->x % 3) || (obj->x % 5)) && (obj->x <= obj->n))
             pthread_cond_wait(&obj->cv, &obj->m);
-        pthread_mutex_unlock(&obj->m); 
-        if (obj->x > obj->n) return;
-
+        
+        if (obj->x > obj->n) goto ret;
         printFizzBuzz();
-        obj->x++;
+        ++obj->x;
+ret:
+        pthread_mutex_unlock(&obj->m);
         pthread_cond_broadcast(&obj->cv);
     }
 }
@@ -69,14 +72,15 @@ void fizzbuzz(FizzBuzz* obj) {
 // to output "x", where x is an integer.
 void number(FizzBuzz* obj) {
     while (obj->x <= obj->n) {
-        pthread_mutex_lock(&obj->m); 
+        pthread_mutex_lock(&obj->m);
         while (((obj->x % 3 == 0) || (obj->x % 5 == 0)) && (obj->x <= obj->n))
             pthread_cond_wait(&obj->cv, &obj->m);
-        pthread_mutex_unlock(&obj->m); 
-        if (obj->x > obj->n) return;
-
+        
+        if (obj->x > obj->n) goto ret;
         printNumber(obj->x);
-        obj->x++;
+        ++obj->x;
+ret:
+        pthread_mutex_unlock(&obj->m);
         pthread_cond_broadcast(&obj->cv);
     }
 }
