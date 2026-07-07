@@ -1,12 +1,12 @@
 class DiningPhilosophers {
-    #define MAX_FORKS 5
+    #define MAXN 5
     sem_t sem;
-    pthread_mutex_t forks[MAX_FORKS];
+    pthread_mutex_t m[MAXN];
 public:
     DiningPhilosophers() {
-        sem_init(&sem, 0, MAX_FORKS - 1);
-        for (int i = 0; i < MAX_FORKS; ++i)
-            pthread_mutex_init(&forks[i], NULL);
+        sem_init(&sem, 0, MAXN - 1);
+        for (int i = 0; i < MAXN; ++i)
+            pthread_mutex_init(&m[i], 0);
     }
 
     void wantsToEat(int philosopher,
@@ -15,23 +15,22 @@ public:
                     function<void()> eat,
                     function<void()> putLeftFork,
                     function<void()> putRightFork) {
-		int left = philosopher;
-        int right = (philosopher + 1) % MAX_FORKS;
-
         sem_wait(&sem);
-        pthread_mutex_lock(&forks[left]);
-        pthread_mutex_lock(&forks[right]);
+        int left = philosopher;
+        int right = (philosopher + 1) % MAXN;
+
+        pthread_mutex_lock(&m[left]);
+        pthread_mutex_lock(&m[right]);
 
         pickLeftFork();
         pickRightFork();
-
         eat();
-
         putLeftFork();
         putRightFork();
 
-        pthread_mutex_unlock(&forks[left]);
-        pthread_mutex_unlock(&forks[right]);
+        pthread_mutex_unlock(&m[left]);
+        pthread_mutex_unlock(&m[right]);
+
         sem_post(&sem);
     }
 };
