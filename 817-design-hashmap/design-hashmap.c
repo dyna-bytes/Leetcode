@@ -12,22 +12,24 @@ typedef struct node_t {
 } Node;
 
 typedef struct {
-    struct node_t heads[HASH_SIZE];
+    struct node_t* heads[HASH_SIZE];
 } MyHashMap;
 
-void insert_node(Node* head, Node* curr) {
-    Node* next = head->next;
-    head->next = curr;
-    curr->prev = head;
-
-    curr->next = next;
-    if (next) next->prev = curr;
+void insert_node(Node** head, Node* curr) {
+    if (*head == NULL) *head = curr;
+    else {
+        curr->next = *head;
+        (*head)->prev = curr;
+        *head = curr;
+    }
 }
 
-void remove_node(Node* curr) {
+void remove_node(Node** head, Node* curr) {
     Node* prev = curr->prev;
     Node* next = curr->next;
     if (prev) prev->next = next;
+    else *head = next;
+
     if (next) next->prev = prev;
 }
 
@@ -38,7 +40,7 @@ int hash(int key) {
 
 Node* find(MyHashMap* obj, int key) {
     int h = hash(key);
-    Node* node = &obj->heads[h];
+    Node* node = obj->heads[h];
     while (node) {
         if (node->page.key == key) return node;
         node = node->next;
@@ -49,8 +51,6 @@ Node* find(MyHashMap* obj, int key) {
 MyHashMap* myHashMapCreate() {
     MyHashMap* obj = calloc(1, sizeof(*obj));
     memset(obj->heads, 0, sizeof(obj->heads));
-    for (int i = 0; i < HASH_SIZE; i++)
-        obj->heads[i].page.key = -1;
     return obj;
 }
 
@@ -78,7 +78,8 @@ void myHashMapRemove(MyHashMap* obj, int key) {
     Node* node = find(obj, key);
     if (!node) return;
 
-    remove_node(node);
+    int h = hash(key);
+    remove_node(&obj->heads[h], node);
     free(node);
 }
 
