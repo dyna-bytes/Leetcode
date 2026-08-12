@@ -1,99 +1,89 @@
-typedef unsigned int u32;
-typedef unsigned long long u64;
+
 #define HASH_SIZE (2 << 12)
-#define LIST_SIZE (2 << 12)
+typedef struct page_t {
+    int key;
+    int val;
+} Page;
+
+typedef struct node_t {
+    struct node_t* prev;
+    struct node_t* next;
+    Page page;
+} Node;
 
 typedef struct {
-    int head[HASH_SIZE];
-    int key[LIST_SIZE];
-    int val[LIST_SIZE];
-    int next[LIST_SIZE];
-    int prev[LIST_SIZE];
-    int unused;
+    struct node_t heads[HASH_SIZE];
 } MyHashMap;
 
-u32 hash(int k) {
-    return (k % HASH_SIZE + HASH_SIZE) % HASH_SIZE;
+void insert_node(Node* head, Node* curr) {
+    Node* next = head->next;
+    head->next = curr;
+    curr->prev = head;
+
+    curr->next = next;
+    if (next) next->prev = curr;
 }
 
-void fill(void* start, void* end, int v) {
-    char* s_ptr = start;
-    char* e_ptr = end;
-    for (char* ptr = s_ptr; ptr < e_ptr; ptr++)
-        *ptr = v;
+void remove_node(Node* curr) {
+    Node* prev = curr->prev;
+    Node* next = curr->next;
+    if (prev) prev->next = next;
+    if (next) next->prev = prev;
 }
 
-int find(MyHashMap* obj, int k) {
-    int h = hash(k);
-    int node = obj->head[h];
-    while (node != -1) {
-        if (obj->key[node] == k) return node;
-        node = obj->next[node];
+
+int hash(int key) {
+    return (key % HASH_SIZE);
+}
+
+Node* find(MyHashMap* obj, int key) {
+    int h = hash(key);
+    Node* node = &obj->heads[h];
+    while (node) {
+        if (node->page.key == key) return node;
+        node = node->next;
     }
-    return -1;
+    return NULL;
 }
 
 MyHashMap* myHashMapCreate() {
     MyHashMap* obj = calloc(1, sizeof(*obj));
-    fill(obj->head, obj->head + HASH_SIZE, -1);
-    fill(obj->key, obj->key + LIST_SIZE, -1);
-    fill(obj->val, obj->val + LIST_SIZE, -1);
-    fill(obj->next, obj->next + LIST_SIZE, -1);
-    fill(obj->prev, obj->prev + LIST_SIZE, -1);
-    obj->unused = 0;
+    memset(obj->heads, 0, sizeof(obj->heads));
+    for (int i = 0; i < HASH_SIZE; i++)
+        obj->heads[i].page.key = -1;
     return obj;
 }
 
-void myHashMapPut(MyHashMap* obj, int k, int v) {
-    int node = find(obj, k);
-    if (node != -1) {
-        obj->val[node] = v;
+void myHashMapPut(MyHashMap* obj, int key, int value) {
+    Node* node = find(obj, key);
+    if (node) {
+        node->page.val = value;
         return;
     }
 
-    int h = hash(k);
-    int* head = obj->head;
-    int* key = obj->key;
-    int* val = obj->val;
-    int* next = obj->next;
-    int* prev = obj->prev;
-    int* unused = &obj->unused;
-    
-    key[*unused] = k;
-    val[*unused] = v;
-
-    if (head[h] != -1) {
-        next[*unused] = head[h];
-        prev[head[h]] = *unused;
-    }
-    head[h] = *unused;
-    (*unused)++;
+    node = calloc(1, sizeof(*node));
+    node->page.key = key;
+    node->page.val = value;
+    int h = hash(key);
+    insert_node(&obj->heads[h], node);
 }
 
-int myHashMapGet(MyHashMap* obj, int k) {
-    int node = find(obj, k);
-    if (node == -1) return -1;
-
-    return obj->val[node];
+int myHashMapGet(MyHashMap* obj, int key) {
+    Node* node = find(obj, key);
+    if (!node) return -1;
+    return node->page.val;
 }
 
-void myHashMapRemove(MyHashMap* obj, int k) {
-    int node = find(obj, k);
-    if (node == -1) return;
+void myHashMapRemove(MyHashMap* obj, int key) {
+    Node* node = find(obj, key);
+    if (!node) return;
 
-    int h = hash(k);
-    int* head = obj->head;
-    int* next = obj->next;
-    int* prev = obj->prev;
-    
-    if (prev[node] != -1) next[prev[node]] = next[node];
-    if (next[node] != -1) prev[next[node]] = prev[node];
-
-    if (head[h] == node) head[h] = next[node];
+    remove_node(node);
+    free(node);
 }
 
 void myHashMapFree(MyHashMap* obj) {
-    
+    free(obj);
 }
 
 /**
