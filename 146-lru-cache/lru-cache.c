@@ -1,7 +1,5 @@
-#define debug(x) printf("[%s](%d) %s is %d\n", __func__, __LINE__, #x, x);
 #define MAXN (10000 + 1)
-
-typedef struct {
+typedef struct page_t {
     int key;
     int value;
 } Page;
@@ -13,23 +11,21 @@ typedef struct node_t {
 } Node;
 
 typedef struct {
-    Node* lut[MAXN]; // {key: node*}
-    Node* head;
-    Node* tail;
-
     int cap;
     int sz;
+    Node* head;
+    Node* tail;
+    Node* lut[MAXN];    
 } LRUCache;
 
-void insertBack(Node* node, Node* tail) {
+void add_tail(Node* node, Node* tail) {
     tail->prev->next = node;
     node->prev = tail->prev;
-
     node->next = tail;
     tail->prev = node;
 }
 
-void removeNode(Node* node) {
+void del_node(Node* node) {
     Node* prev = node->prev;
     Node* next = node->next;
     prev->next = next;
@@ -45,35 +41,32 @@ LRUCache* lRUCacheCreate(int capacity) {
     obj->head = head;
     obj->tail = tail;
     obj->cap = capacity;
-    obj->sz = 0;
     return obj;
 }
 
 int lRUCacheGet(LRUCache* obj, int key) {
     Node** lut = obj->lut;
     if (lut[key] == NULL) return -1;
+
     Node* node = lut[key];
-    removeNode(node);
-    insertBack(node, obj->tail);
+    del_node(node);
+    add_tail(node, obj->tail);
     return node->page.value;
 }
 
 void lRUCachePut(LRUCache* obj, int key, int value) {
     Node** lut = obj->lut;
-    if (lut[key]) {
-        lRUCacheGet(obj, key);
+    if (lRUCacheGet(obj, key) != -1) {
         lut[key]->page.value = value;
         return;
     }
 
     int cap = obj->cap;
     int* sz = &obj->sz;
-    Node* head = obj->head;
-    Node* tail = obj->tail;
     if (++(*sz) > cap) {
-        Node* evict = head->next;
-        removeNode(evict);
+        Node* evict = obj->head->next;
         lut[evict->page.key] = NULL;
+        del_node(evict);
         --(*sz);
     }
 
@@ -81,13 +74,13 @@ void lRUCachePut(LRUCache* obj, int key, int value) {
     node->page.key = key;
     node->page.value = value;
     lut[key] = node;
-    insertBack(node, tail);
+    add_tail(node, obj->tail);
 }
 
 void lRUCacheFree(LRUCache* obj) {
-    for (Node* curr = obj->head, *next; curr; curr = next) {
-        next = curr->next;
-        free(curr);
+    for (Node* node = obj->head, *next; node; node = next) {
+        next = node->next;
+        free(node);
     }
     free(obj);
 }
