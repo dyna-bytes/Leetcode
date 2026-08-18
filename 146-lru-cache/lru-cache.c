@@ -1,5 +1,5 @@
 #define MAXN (10000 + 1)
-typedef struct page_t {
+typedef struct {
     int key;
     int value;
 } Page;
@@ -15,21 +15,23 @@ typedef struct {
     int sz;
     Node* head;
     Node* tail;
-    Node* lut[MAXN];    
+    Node* hash[MAXN]; // { key: node_t* }
 } LRUCache;
 
 void add_tail(Node* node, Node* tail) {
-    tail->prev->next = node;
-    node->prev = tail->prev;
+    Node* prev = tail->prev;
+    prev->next = node;
+    node->prev = prev;
     node->next = tail;
     tail->prev = node;
 }
 
-void del_node(Node* node) {
+void del_list(Node* node) {
     Node* prev = node->prev;
     Node* next = node->next;
     prev->next = next;
     next->prev = prev;
+    node->prev = node->next = NULL;
 }
 
 LRUCache* lRUCacheCreate(int capacity) {
@@ -45,19 +47,18 @@ LRUCache* lRUCacheCreate(int capacity) {
 }
 
 int lRUCacheGet(LRUCache* obj, int key) {
-    Node** lut = obj->lut;
-    if (lut[key] == NULL) return -1;
-
-    Node* node = lut[key];
-    del_node(node);
+    Node** hash = obj->hash;
+    if (!hash[key]) return -1;
+    Node* node = hash[key];
+    del_list(node);
     add_tail(node, obj->tail);
     return node->page.value;
 }
 
 void lRUCachePut(LRUCache* obj, int key, int value) {
-    Node** lut = obj->lut;
+    Node** hash = obj->hash;
     if (lRUCacheGet(obj, key) != -1) {
-        lut[key]->page.value = value;
+        hash[key]->page.value = value;
         return;
     }
 
@@ -65,22 +66,23 @@ void lRUCachePut(LRUCache* obj, int key, int value) {
     int* sz = &obj->sz;
     if (++(*sz) > cap) {
         Node* evict = obj->head->next;
-        lut[evict->page.key] = NULL;
-        del_node(evict);
+        hash[evict->page.key] = NULL;
+        del_list(evict);
+        free(evict);
         --(*sz);
     }
 
     Node* node = calloc(1, sizeof(*node));
     node->page.key = key;
     node->page.value = value;
-    lut[key] = node;
+    hash[key] = node;
     add_tail(node, obj->tail);
 }
 
 void lRUCacheFree(LRUCache* obj) {
-    for (Node* node = obj->head, *next; node; node = next) {
-        next = node->next;
-        free(node);
+    for (Node* curr = obj->head, *next; curr; curr = next) {
+        next = curr->next;
+        free(curr);
     }
     free(obj);
 }
