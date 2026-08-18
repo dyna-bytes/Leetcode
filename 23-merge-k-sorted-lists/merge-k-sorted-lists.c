@@ -6,7 +6,7 @@
  * };
  */
 
-#define SWAP(t, a, b) do { \
+#define SWAP(t, a, b) do { \ 
     t tmp = a; \
     a = b; \
     b = tmp; \
@@ -19,16 +19,13 @@ typedef struct {
 } Heap;
 
 Heap* createHeap() {
-    Heap* obj = malloc(sizeof(*obj));
-    memset(obj->arr, 0, sizeof(obj->arr));
-    obj->sz = 0;
+    Heap* obj = calloc(1, sizeof(*obj));
     return obj;
 }
 
 void heapify_up(Heap* obj, int index) {
     int* arr = obj->arr;
     int curr = index;
-
     while (curr > ROOT) {
         int parent = curr / 2;
         if (arr[parent] <= arr[curr]) break;
@@ -39,17 +36,17 @@ void heapify_up(Heap* obj, int index) {
 
 void heapify_down(Heap* obj, int index) {
     int* arr = obj->arr;
-    int* sz = &obj->sz;
+    int sz = obj->sz;
     int curr = index;
 
-    while (curr < (*sz)) {
+    while (curr < sz) {
         int left = curr * 2;
         int right = curr * 2 + 1;
         int smallest = curr;
 
-        if (left <= *sz && arr[left] < arr[smallest])
+        if (left <= sz && arr[left] < arr[smallest])
             smallest = left;
-        if (right <= *sz && arr[right] < arr[smallest])
+        if (right <= sz && arr[right] < arr[smallest])
             smallest = right;
         
         if (smallest == curr) break;
@@ -89,19 +86,18 @@ struct ListNode* mergeKLists(struct ListNode** lists, int listsSize) {
     if (listsSize == 1) return lists[0];
 
     Heap* heap = createHeap();
-    struct ListNode ret; 
+    struct ListNode ret;
     struct ListNode* curr = &ret;
-
     bool pushed;
     do {
         pushed = false;
         for (int i = 0; i < listsSize; ++i) {
             struct ListNode* head = lists[i];
-            if (head == NULL) continue;
+            if (!head) continue;
             push(heap, head->val);
             lists[i] = head->next;
             pushed = true;
-        }
+        } 
 
         int val = top(heap);
         pop(heap);
@@ -112,7 +108,6 @@ struct ListNode* mergeKLists(struct ListNode** lists, int listsSize) {
         curr->next = node;
         curr = node;
     } while (pushed || !empty(heap));
-
     free(heap);
     return ret.next;
 }
