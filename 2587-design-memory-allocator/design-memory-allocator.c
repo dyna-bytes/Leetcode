@@ -1,11 +1,10 @@
 
 #define MAXN 1001
-typedef struct page_t {
+typedef struct {
     int index;
     int size;
     int mID;
 } Page;
-
 typedef struct node_t {
     struct node_t* phys_prev;
     struct node_t* phys_next;
@@ -13,16 +12,15 @@ typedef struct node_t {
     struct node_t* list_next;
     Page page;
 } Node;
-
 typedef struct {
     Node* head;
-    Node* free_lists[MAXN];
-    Node* alloc_lists[MAXN];
+    Node* free_lists[MAXN]; // { size: node list }
+    Node* alloc_lists[MAXN]; // { mID: node list }
 } Allocator;
 
 void add_list(Node** head, Node* node) {
     if (*head) (*head)->list_prev = node;
-    node->list_next = (*head);
+    node->list_next = *head;
     node->list_prev = NULL;
     (*head) = node;
 }
@@ -30,14 +28,15 @@ void add_list(Node** head, Node* node) {
 void del_list(Node** head, Node* node) {
     if (node->list_prev) node->list_prev->list_next = node->list_next;
     else (*head) = node->list_next;
-
+    
     if (node->list_next) node->list_next->list_prev = node->list_prev;
     node->list_prev = node->list_next = NULL;
 }
 
 void add_phys(Node* node, Node* phys_prev) {
-    if (phys_prev->phys_next) phys_prev->phys_next->phys_prev = node;
-    node->phys_next = phys_prev->phys_next;
+    Node* phys_next = phys_prev->phys_next;
+    if (phys_next) phys_next->phys_prev = node;
+    node->phys_next = phys_next;
     phys_prev->phys_next = node;
     node->phys_prev = phys_prev;
 }
@@ -47,7 +46,7 @@ void del_phys(Node* node) {
     Node* phys_next = node->phys_next;
     if (phys_prev) phys_prev->phys_next = phys_next;
     if (phys_next) phys_next->phys_prev = phys_prev;
-    node->phys_next = node->phys_prev = NULL;
+    node->phys_prev = node->phys_next = NULL;
 }
 
 Allocator* allocatorCreate(int n) {
@@ -55,15 +54,15 @@ Allocator* allocatorCreate(int n) {
     Node* head = calloc(1, sizeof(*head));
     head->page.size = n;
     obj->head = head;
-    add_list(&obj->free_lists[n], head);
+    obj->free_lists[n] = head;
     return obj;
 }
 
 int allocatorAllocate(Allocator* obj, int size, int mID) {
     Node* best = NULL;
     for (int sz = size; sz < MAXN; ++sz) {
-        for (Node* curr = obj->free_lists[sz]; curr; curr = curr->list_next) 
-            if (!best || best->page.index > curr->page.index) 
+        for (Node* curr = obj->free_lists[sz]; curr; curr = curr->list_next)
+            if (!best || best->page.index > curr->page.index)
                 best = curr;
     }
 
@@ -78,7 +77,6 @@ int allocatorAllocate(Allocator* obj, int size, int mID) {
         add_list(&obj->free_lists[split->page.size], split);
         best->page.size = size;
     }
-
     best->page.mID = mID;
     add_list(&obj->alloc_lists[mID], best);
     return best->page.index;
@@ -88,9 +86,9 @@ int allocatorFreeMemory(Allocator* obj, int mID) {
     int sz = 0;
     for (Node* curr = obj->alloc_lists[mID], *list_next; curr; curr = list_next) {
         list_next = curr->list_next;
-        del_list(&obj->alloc_lists[mID], curr);
         sz += curr->page.size;
         curr->page.mID = 0;
+        del_list(&obj->alloc_lists[mID], curr);
 
         Node* phys_prev = curr->phys_prev;
         if (phys_prev && phys_prev->page.mID == 0) {
