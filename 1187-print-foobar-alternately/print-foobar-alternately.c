@@ -26,11 +26,12 @@ void foo(FooBar* obj) {
         pthread_mutex_lock(&obj->m);
         while (obj->turn != 0)
             pthread_cond_wait(&obj->cv, &obj->m);
+        pthread_mutex_unlock(&obj->m);
         // printFoo() outputs "foo". Do not change or remove this line.
         printFoo();
+
         obj->turn = 1;
         pthread_cond_signal(&obj->cv);
-        pthread_mutex_unlock(&obj->m);
     }
 }
 
@@ -40,15 +41,15 @@ void bar(FooBar* obj) {
         pthread_mutex_lock(&obj->m);
         while (obj->turn != 1)
             pthread_cond_wait(&obj->cv, &obj->m);
+        pthread_mutex_unlock(&obj->m);
         // printBar() outputs "bar". Do not change or remove this line.
         printBar();
+
         obj->turn = 0;
         pthread_cond_signal(&obj->cv);
-        pthread_mutex_unlock(&obj->m);
     }
 }
 
 void fooBarFree(FooBar* obj) {
-    pthread_mutex_destroy(&obj->m);   
-    pthread_cond_destroy(&obj->cv);
+    
 }
