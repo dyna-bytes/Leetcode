@@ -6,6 +6,7 @@ typedef struct {
 } H2O;
 
 void releaseHydrogen();
+
 void releaseOxygen();
 
 H2O* h2oCreate() {
@@ -22,7 +23,8 @@ void hydrogen(H2O* obj) {
     sem_wait(&obj->sem_hy);
     // releaseHydrogen() outputs "H". Do not change or remove this line.
     releaseHydrogen();
-    if (++obj->h == 2) sem_post(&obj->sem_ox);
+    if (++obj->h == 2) 
+        sem_post(&obj->sem_ox);
 }
 
 void oxygen(H2O* obj) {
@@ -36,7 +38,5 @@ void oxygen(H2O* obj) {
 
 void h2oFree(H2O* obj) {
     // User defined data may be cleaned up here.
-    sem_destroy(&obj->sem_hy);
-    sem_destroy(&obj->sem_ox);
-    free(obj);
+    
 }
