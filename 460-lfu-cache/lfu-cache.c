@@ -1,5 +1,5 @@
-#define MAXKEY (100000 + 1)
-#define MAXFREQ (100000 + 1)
+
+#define MAXN (100000 + 1)
 
 typedef struct {
     int key;
@@ -19,100 +19,96 @@ typedef struct {
     int cap;
     int sz;
     int min_f;
-    Node* freq[MAXFREQ];
-    Node* lut[MAXKEY];    
+    Node* freqs[MAXN]; // { freq: node list }
+    Node* cache[MAXN]; // { key: node* }
 } LFUCache;
 
-void insertTail(Node* node, Node* tail) {
+void insert_tail(Node* node, Node* tail) {
     Node* prev = tail->prev;
     prev->next = node;
     node->prev = prev;
     node->next = tail;
     tail->prev = node;
-
     node->head = tail->head;
     node->tail = tail;
 }
 
-void removeNode(Node* node) {
+void remove_node(Node* node) {
     Node* prev = node->prev;
     Node* next = node->next;
-
     prev->next = next;
     next->prev = prev;
-    node->prev = node->next = NULL;
+    node->prev = node->next = node->head = node->tail = NULL;
 }
 
-bool listEmpty(Node* head) {
-    Node* tail = head->tail;
-    return (head->next == tail && tail->prev == head);
+bool list_empty(Node* tail) {
+    Node* head = tail->head;
+    return head->next == tail;
 }
 
 LFUCache* lFUCacheCreate(int capacity) {
     LFUCache* obj = calloc(1, sizeof(*obj));
-    obj->cap = capacity;
-    for (int i = 0; i < MAXFREQ; ++i) {
+    
+    for (int i = 0; i < MAXN; ++i) {
         Node* head = calloc(1, sizeof(*head));
         Node* tail = calloc(1, sizeof(*tail));
-        head->next = head->tail = tail;
-        tail->prev = tail->head = head;
-        obj->freq[i] = head;
+        obj->freqs[i] = tail->head = tail->prev = head;
+        insert_tail(head, tail);
     }
+
+    obj->cap = capacity;
     return obj;
 }
 
 int lFUCacheGet(LFUCache* obj, int key) {
-    Node** lut = obj->lut;
-    Node** freq = obj->freq;
+    Node** cache = obj->cache;
+    Node** freqs = obj->freqs;
+    if (cache[key] == NULL) return -1;
+
+    Node* node = cache[key];
     int* min_f = &obj->min_f;
-    if (lut[key] == NULL) return -1;
-
-    Node* node = lut[key];
-    Page* page = &node->page;
-    int *k = &page->key, *v = &page->value, *f = &page->freq;
-    removeNode(node);
-
-    if (*f == *min_f && listEmpty(freq[*f])) ++(*min_f);
+    int* f = &node->page.freq;
+    remove_node(node);
+    if ((*f == *min_f) && list_empty(freqs[*min_f]->tail)) ++(*min_f);
     ++(*f);
-    insertTail(node, freq[*f]->tail);
-    return *v;
+    insert_tail(node, freqs[*f]->tail);
+    return node->page.value;
 }
 
 void lFUCachePut(LFUCache* obj, int key, int value) {
-    Node** lut = obj->lut;
-    Node** freq = obj->freq;
-    int* min_f = &obj->min_f;
-    int* sz = &obj->sz;
-    int cap = obj->cap;
+    Node** cache = obj->cache;
+    Node** freqs = obj->freqs;
     if (lFUCacheGet(obj, key) != -1) {
-        lut[key]->page.value = value;
+        cache[key]->page.value = value;
         return;
     }
 
+    int* min_f = &obj->min_f;
+    int* sz = &obj->sz;
+    int cap = obj->cap;
     if (++(*sz) > cap) {
-        Node* evict = freq[*min_f]->next;
-        removeNode(evict);
-        lut[evict->page.key] = NULL;
+        Node* evict = obj->freqs[*min_f]->next;
+        cache[evict->page.key] = NULL;
+        remove_node(evict);
         free(evict);
         --(*sz);
     }
 
-    (*min_f) = 1;
     Node* node = calloc(1, sizeof(*node));
     node->page.key = key;
     node->page.value = value;
-    node->page.freq = *min_f;
-
-    insertTail(node, freq[*min_f]->tail);
-    lut[key] = node;
+    node->page.freq = *min_f = 1;
+    cache[key] = node;
+    insert_tail(node, freqs[*min_f]->tail);
 }
 
 void lFUCacheFree(LFUCache* obj) {
-    Node** freq = obj->freq;
-    for (int i = 0; i < MAXFREQ; ++i) {
-        if (freq[i] && freq[i]->tail) free(freq[i]->tail);
-        if (freq[i]) free(freq[i]);
+    Node** freqs = obj->freqs;
+    for (int i = 0; i < MAXN; ++i) {
+        if (freqs[i] && freqs[i]->tail) free(freqs[i]->tail);
+        if (freqs[i]) free(freqs[i]);
     }
+
     free(obj);
 }
 
