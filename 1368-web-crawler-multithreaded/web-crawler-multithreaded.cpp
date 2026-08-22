@@ -7,7 +7,6 @@
  * };
  */
 
-#define debug(x) cout << "[" << __func__ << "](" << __LINE__ << #x << " is " << x << endl;
 class Solution;
 typedef struct {
     Solution* obj;
@@ -21,19 +20,20 @@ typedef struct {
 
 class ThreadPool {
     queue<Task*> taskQueue;
-    vector<pthread_t> threads; 
+    vector<pthread_t> threads;
     pthread_mutex_t mutexQueue;
     pthread_cond_t condQueue;
     pthread_cond_t condDone;
-    bool sigkill;
-    int activeTasks;
+    _Atomic(bool) sigkill;
+    _Atomic(int) activeTasks;
+
     static void* worker(void *obj) {
         ThreadPool* threadPool = (ThreadPool*)obj;
         while (true) {
             pthread_mutex_lock(&threadPool->mutexQueue);
             while (threadPool->taskQueue.empty() && !threadPool->sigkill)
                 pthread_cond_wait(&threadPool->condQueue, &threadPool->mutexQueue);
-
+            
             if (threadPool->sigkill) {
                 pthread_mutex_unlock(&threadPool->mutexQueue);
                 return NULL;
@@ -43,13 +43,10 @@ class ThreadPool {
             threadPool->taskQueue.pop();
 
             pthread_mutex_unlock(&threadPool->mutexQueue);
-
+            
             task->func(task->userArgs);
-
-            pthread_mutex_lock(&threadPool->mutexQueue);
-            if (--threadPool->activeTasks == 0) 
+            if (--threadPool->activeTasks == 0)
                 pthread_cond_signal(&threadPool->condDone);
-            pthread_mutex_unlock(&threadPool->mutexQueue);
         }
     }
 public:
@@ -60,13 +57,11 @@ public:
         pthread_cond_init(&condDone, 0);
         sigkill = false;
         activeTasks = 0;
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < n; ++i) 
             pthread_create(&threads[i], 0, worker, this);
     }
     ~ThreadPool() {
-        pthread_mutex_lock(&mutexQueue);
         sigkill = true;
-        pthread_mutex_unlock(&mutexQueue);
         pthread_cond_broadcast(&condQueue);
 
         for (int i = 0; i < threads.size(); ++i)
@@ -98,7 +93,7 @@ class Solution {
 
     static string get_hostname(const string& url) {
         size_t start = url.find("://") + 3;
-        size_t end = url.find('/', start);
+        size_t end = url.find("/", start);
         return url.substr(start, end - start);
     }
 
