@@ -23,16 +23,16 @@ typedef struct {
     Node* cache[MAXN]; // { key: node* }
 } LFUCache;
 
-Node* lazy_alloc(Node** tail) {
-    if (*tail) return (*tail);
-    Node* head = calloc(1, sizeof(*head));
-    head->next = head->tail = (*tail);
-    (*tail)->prev = (*tail)->next = head;
-    return (*tail);
+Node* lazy_alloc(Node** head) {
+    if (*head) return (*head);
+    (*head) = calloc(1, sizeof(**head));
+    Node* tail = calloc(1, sizeof(*tail));
+    (*head)->next = (*head)->tail = tail;
+    tail->prev = tail->head = (*head);
+    return (*head);
 }
 
 void insert_tail(Node* node, Node* tail) {
-    lazy_alloc(&tail);
     Node* prev = tail->prev;
     prev->next = node;
     node->prev = prev;
@@ -57,13 +57,6 @@ bool list_empty(Node* tail) {
 
 LFUCache* lFUCacheCreate(int capacity) {
     LFUCache* obj = calloc(1, sizeof(*obj));
-    
-    for (int i = 0; i < MAXN; ++i) {
-        Node* head = calloc(1, sizeof(*head));
-        Node* tail = calloc(1, sizeof(*tail));
-        obj->freqs[i] = tail->head = tail->prev = head;
-        insert_tail(head, tail);
-    }
 
     obj->cap = capacity;
     return obj;
@@ -78,8 +71,10 @@ int lFUCacheGet(LFUCache* obj, int key) {
     int* min_f = &obj->min_f;
     int* f = &node->page.freq;
     remove_node(node);
+    lazy_alloc(&freqs[*min_f]);
     if ((*f == *min_f) && list_empty(freqs[*min_f]->tail)) ++(*min_f);
     ++(*f);
+    lazy_alloc(&freqs[*f]);
     insert_tail(node, freqs[*f]->tail);
     return node->page.value;
 }
@@ -108,6 +103,7 @@ void lFUCachePut(LFUCache* obj, int key, int value) {
     node->page.value = value;
     node->page.freq = *min_f = 1;
     cache[key] = node;
+    lazy_alloc(&freqs[*min_f]);
     insert_tail(node, freqs[*min_f]->tail);
 }
 
