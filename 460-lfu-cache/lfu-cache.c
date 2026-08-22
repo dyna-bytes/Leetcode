@@ -23,7 +23,16 @@ typedef struct {
     Node* cache[MAXN]; // { key: node* }
 } LFUCache;
 
+Node* lazy_alloc(Node** tail) {
+    if (*tail) return (*tail);
+    Node* head = calloc(1, sizeof(*head));
+    head->next = head->tail = (*tail);
+    (*tail)->prev = (*tail)->next = head;
+    return (*tail);
+}
+
 void insert_tail(Node* node, Node* tail) {
+    lazy_alloc(&tail);
     Node* prev = tail->prev;
     prev->next = node;
     node->prev = prev;
